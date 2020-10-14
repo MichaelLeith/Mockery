@@ -10,6 +10,7 @@ public final class Tracker {
     private static volatile Visitor lastCall = null;
     private final List<Visitor.Description> callHistory = new ArrayList<>();
     private final Map<String, CallHistory> callHistories = new HashMap<>();
+    private int size = 0;
 
     // key should be name + signature
     public boolean visit(final Visitor visitor, final String key, final Object... args) {
@@ -22,7 +23,9 @@ public final class Tracker {
 
     public Map<String, CallHistory> collect() {
         synchronized (this) {
-            if (callHistories.isEmpty() && !callHistory.isEmpty()) {
+            if (!callHistory.isEmpty() && size != callHistory.size()) {
+                size = callHistory.size();
+                callHistories.clear();
                 for (final Visitor.Description description : callHistory) {
                     CallHistory hist = callHistories.get(description.getKey());
                     if (hist == null) {

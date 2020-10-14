@@ -6,26 +6,53 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
-import org.objenesis.Objenesis;
 import org.objenesis.ObjenesisStd;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class Mockery {
-    public static final Objenesis OBJENESIS = new ObjenesisStd();
+    private static <T> Class<? extends T> inject(final Class<T> clazz) throws Exception {
+        final ClassWriter wr = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+        final ClazzVisitor visitor = new ClazzVisitor(wr);
+        new ClassReader(clazz.getName()).accept(visitor, ClassReader.EXPAND_FRAMES);
+        return (Class<? extends T>) ByteClassLoader.defineClass(visitor.getName(), wr.toByteArray());
+    }
+
+    private static <T> T init(final T instance,
+                              final Class<? extends T> clazz,
+                              final T impl) throws Exception{
+        final Field visitor = clazz.getDeclaredField("visitor");
+        visitor.setAccessible(true);
+        visitor.set(instance, new Visitor(impl));
+        return instance;
+    }
 
     public static <T> T mock(final Class<T> clazz) throws Exception {
-        final ClassReader reader = new ClassReader(clazz.getName());
-        final ClassWriter wr = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        final ClazzVisitor v = new ClazzVisitor(wr);
-        reader.accept(v, ClassReader.EXPAND_FRAMES);
-        final Class<? extends T> c = (Class<? extends T>) ByteClassLoader.defineClass(v.getName(), wr.toByteArray());
-        final T instance = OBJENESIS.newInstance(c);
-        final Field visitor = c.getDeclaredField("visitor");
-        visitor.setAccessible(true);
-        visitor.set(instance, new Visitor());
-        return instance;
+        final Class<? extends T> c = inject(clazz);
+        return init(new ObjenesisStd().newInstance(c), c, null);
+    }
+
+    public static <T> T spy(final T impl) throws Exception {
+        final Class<? extends T> c = inject((Class<T>) impl.getClass());
+        return init(new ObjenesisStd().newInstance(c), c, impl);
+    }
+
+    public static <T> T spy(final Class<T> clazz, final Object... args) throws Exception {
+        for (final Constructor<?> constructor: clazz.getConstructors()) {
+            if (constructor.getParameterCount() == args.length) {
+                final Class<?> params[] = constructor.getParameterTypes();
+                for (int i = 0; i < args.length; i++) {
+                    if (!params[i].isAssignableFrom(args[i].getClass())) {
+                        break;
+                    }
+                }
+                return spy((T) constructor.newInstance(args));
+            }
+        }
+        throw new RuntimeException("no constructor found for args " + Arrays.asList(args));
     }
 
     public static Mock when(final Object o) {
@@ -68,9 +95,11 @@ public class Mockery {
         };
         private String clazz;
         private String parent;
+        private final ClassVisitor visitor;
 
         public ClazzVisitor(final ClassVisitor visitor) {
-            super(Opcodes.ASM9, Objects.requireNonNull(visitor));
+            super(Opcodes.ASM9, null);
+            this.visitor = Objects.requireNonNull(visitor);
         }
 
         private String getName() {
@@ -90,20 +119,20 @@ public class Mockery {
             final boolean isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
             clazz = name + "Mock";
             if (isInterface) {
-                super.visit(version, Opcodes.ACC_PUBLIC, clazz, "L" + clazz,
+                visitor.visit(version, Opcodes.ACC_PUBLIC, clazz, "L" + clazz,
                         "java/lang/Object",
                         new String[]{name, Type.getInternalName(Trackable.class)});
                 parent = "java/lang/Object";
                 createConstructor("()V");
             } else {
                 parent = name;
-                super.visit(version, Opcodes.ACC_PUBLIC, clazz, signature, name,
+                visitor.visit(version, Opcodes.ACC_PUBLIC, clazz, signature, name,
                         new String[]{Type.getInternalName(Trackable.class)});
             }
 
-            super.visitField(Opcodes.ACC_PRIVATE, IMPL, IMPL_DESC, null, null);
+            visitor.visitField(Opcodes.ACC_PRIVATE, IMPL, IMPL_DESC, null, null);
             {
-                final MethodVisitor vis = super.visitMethod(Opcodes.ACC_PUBLIC, "getVisitor",
+                final MethodVisitor vis = visitor.visitMethod(Opcodes.ACC_PUBLIC, "getVisitor",
                         "()L" + IMPL_NAME + ";",
                         null,
                         null);
@@ -116,7 +145,7 @@ public class Mockery {
         }
 
         public void createConstructor(final String descriptor) {
-            final MethodVisitor vis = super.visitMethod(Opcodes.ACC_PUBLIC, "<init>", descriptor, null, null);
+            final MethodVisitor vis = visitor.visitMethod(Opcodes.ACC_PUBLIC, "<init>", descriptor, null, null);
             vis.visitCode();
             vis.visitVarInsn(Opcodes.ALOAD, 0); // this
             final Type[] args = Type.getArgumentTypes(descriptor);
@@ -138,12 +167,11 @@ public class Mockery {
                 createConstructor(descriptor);
                 return null;
             }
-            final MethodVisitor vis = super.visitMethod(Opcodes.ACC_PUBLIC, name, descriptor, signature, exceptions);
+            final MethodVisitor vis = visitor.visitMethod(Opcodes.ACC_PUBLIC, name, descriptor, signature, exceptions);
             vis.visitCode();
             vis.visitVarInsn(Opcodes.ALOAD, 0); // this
-
+            //vis.visitVarInsn(Opcodes.ALOAD, 0); // this
             // call visitors and return using the impl
-            vis.visitVarInsn(Opcodes.ALOAD, 0); // this
             vis.visitFieldInsn(Opcodes.GETFIELD, clazz, IMPL, IMPL_DESC);
             vis.visitLdcInsn(name + descriptor);
             final Type[] args = Type.getArgumentTypes(descriptor);

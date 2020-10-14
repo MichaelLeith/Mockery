@@ -22,10 +22,6 @@ dependencies {
 
 }
 
-//applicationDefaultJvmArgs = ["-Djava.system.class.loader=work.teamteam.Loader",
-//                             "-Dwork.teamteam.causal=work.teamteam.example"]
-
 test {
-    //jvmArgs += applicationDefaultJvmArgs
     useJUnitPlatform()
 }

@@ -1,5 +1,7 @@
 package work.teamteam.mock;
 
+import org.objenesis.ObjenesisStd;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -28,7 +30,7 @@ public class Mock {
     }
 
     public Mock thenThrow(final Class<? extends Throwable> e) {
-        return thenThrow(Mockery.OBJENESIS.newInstance(e));
+        return thenThrow(new ObjenesisStd().newInstance(e));
     }
 
     public <T extends Throwable> Mock thenThrow(final T e) {

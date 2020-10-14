@@ -31,7 +31,10 @@ public class IntegTest {
     }
 
     public static class Foo {
+        private final int i;
+
         public Foo(int i) {
+            this.i = i;
         }
 
         // @note: won't work with package-private, can't override them outside of the same pkg... interesting
@@ -42,9 +45,31 @@ public class IntegTest {
 
     public static final class Final {}
 
+    // @todo: test inheritance
+    // @todo: can you spy an interface?
     @Test
     void testFinal() {
         assertThrows(RuntimeException.class, () -> Mockery.mock(Final.class));
+    }
+
+    @Test
+    void testSpyConcrete() throws Exception {
+        final Foo foo = Mockery.spy(new Foo(1));
+        assertEquals("woo", foo.test("woo"));
+        Mockery.verify(foo, 1).test("woo");
+        Mockery.when(foo.test("woo")).thenReturn("lol");
+        assertEquals("lol", foo.test("woo"));
+        Mockery.verify(foo, 2).test("woo");
+    }
+
+    @Test
+    void testSpyClass() throws Exception {
+        final Foo foo = Mockery.spy(Foo.class, 1);
+        assertEquals("woo", foo.test("woo"));
+        Mockery.verify(foo, 1).test("woo");
+        Mockery.when(foo.test("woo")).thenReturn("lol");
+        assertEquals("lol", foo.test("woo"));
+        Mockery.verify(foo, 2).test("woo");
     }
 
     @Test
