@@ -1,0 +1,31 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+sourceCompatibility = JavaVersion.VERSION_14
+targetCompatibility = JavaVersion.VERSION_14
+
+group 'work.teamteam'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0")
+    compile(group: 'org.ow2.asm', name: 'asm', version: '9.0')
+    compile(group: 'org.ow2.asm', name: 'asm-commons', version: '9.0')
+    compile(group: 'org.objenesis', name: 'objenesis', version: '3.1')
+
+}
+
+//applicationDefaultJvmArgs = ["-Djava.system.class.loader=work.teamteam.Loader",
+//                             "-Dwork.teamteam.causal=work.teamteam.example"]
+
+test {
+    //jvmArgs += applicationDefaultJvmArgs
+    useJUnitPlatform()
+}
