@@ -18,7 +18,6 @@ package work.teamteam.example;
 
 import org.junit.jupiter.api.Test;
 import work.teamteam.mock.Matchers;
-import work.teamteam.mock.Mock;
 import work.teamteam.mock.Mockery;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -1,13 +1,14 @@
 plugins {
-    id 'java'
+    id 'java-library'
     id 'application'
+    id 'jacoco'
 }
 
 sourceCompatibility = JavaVersion.VERSION_14
 targetCompatibility = JavaVersion.VERSION_14
 
 group 'work.teamteam'
-version '1.0-SNAPSHOT'
+version '0.1'
 
 repositories {
     mavenCentral()
@@ -19,9 +20,42 @@ dependencies {
     compile(group: 'org.ow2.asm', name: 'asm', version: '9.0')
     compile(group: 'org.ow2.asm', name: 'asm-commons', version: '9.0')
     compile(group: 'org.objenesis', name: 'objenesis', version: '3.1')
-
 }
 
 test {
     useJUnitPlatform()
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                counter = 'BRANCH'
+                minimum = 0.710
+            }
+        }
+
+        rule {
+            limit {
+                minimum = 0.850
+            }
+        }
+    }
+}
+
+test {
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+}
+check.dependsOn jacocoTestCoverageVerification
+
+jacocoTestReport {
+    reports {
+        xml.enabled false
+        csv.enabled false
+        html.destination file("${buildDir}/jacocoHtml")
+    }
 }
