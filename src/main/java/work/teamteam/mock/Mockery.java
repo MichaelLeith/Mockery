@@ -222,13 +222,17 @@ public class Mockery {
         private void writeArgsArray(final MethodVisitor vis, final Type[] args) {
             writeLength(vis, args.length);
             vis.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
+            int j = 1;
             for (int i = 0; i < args.length; i++) {
                 vis.visitInsn(Opcodes.DUP);
                 // write the array index
                 writeLength(vis, i);
                 final Type arg = args[i];
                 // load parameter to stack
-                vis.visitVarInsn(arg.getOpcode(Opcodes.ILOAD), i + 1);
+                vis.visitVarInsn(arg.getOpcode(Opcodes.ILOAD), j);
+                // handling variable width entries (e.g void/long/doubles)
+                j += arg.getSize();
+
                 // handle boxing
                 if (arg.getSort() == Type.VOID) {
                     vis.visitInsn(Opcodes.RETURN);

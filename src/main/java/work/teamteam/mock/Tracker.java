@@ -37,6 +37,16 @@ public final class Tracker {
         return true;
     }
 
+    public static Mock rollbackLast() {
+        final List<Visitor.Description> hist = lastCall.getTracker().callHistory;
+        return new Mock(lastCall, hist.remove(hist.size() - 1));
+    }
+
+    public static Mock last() {
+        final List<Visitor.Description> hist = lastCall.getTracker().callHistory;
+        return new Mock(lastCall, hist.get(hist.size() - 1));
+    }
+
     public Map<String, CallHistory> collect() {
         synchronized (this) {
             if (!callHistory.isEmpty() && size != callHistory.size()) {
@@ -53,11 +63,6 @@ public final class Tracker {
             }
         }
         return callHistories;
-    }
-
-    public static Mock rollbackLast() {
-        final List<Visitor.Description> hist = lastCall.getTracker().callHistory;
-        return new Mock(lastCall, hist.remove(hist.size() - 1));
     }
 
     public long get(final String key, final Object[] args) {

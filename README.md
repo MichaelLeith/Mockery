@@ -4,8 +4,7 @@ This is a quick prototype to learn how Mocking frameworks (like Mockito) in Java
 
 ## TODO
 
-* Matchers
-* Improve Spy logic
+* Cleanup Spy/Matcher logic
 * Explore Instrumentation
 
 ## Dependencies
@@ -56,6 +55,14 @@ when(t.foo()).thenReturn(x)
 // throw an exception if t.foo() was not called exactly once
 
 verify(t, 1).foo();
+
+// Argument Matchers
+
+when(t.bar(anyInt()).thenReturn(x);
+
+when(t.bar(any(SomeClass.class)).thenReturn(x);
+
+when(t.bar(matches(a -> somePredicate(a)), eq("foo"), anyShort()).thenReturn(x);
 
 ## Defaults
 

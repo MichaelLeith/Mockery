@@ -19,22 +19,23 @@ package work.teamteam.mock;
 import org.objectweb.asm.Type;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 public class Visitor<T> {
     private static final BiPredicate<String, Object[]> DEFAULT_VERIFIER = (k, a) -> true;
     // @note: mutation is not thread safe, we assume all your setup is run before using the mock
-    private final Map<Description, Fn> callbacks;
+    private final List<Callback> callbacks;
     private final Tracker tracker;
     private final T impl;
     private BiPredicate<String, Object[]> verifier;
 
     public Visitor(final T impl) {
-        this.callbacks = new HashMap<>();
+        this.callbacks = new ArrayList<>();
         this.tracker = new Tracker();
         this.impl = impl;
         this.verifier = DEFAULT_VERIFIER;
@@ -49,13 +50,22 @@ public class Visitor<T> {
         if (!run(key, args)) {
             return getFallback(clazz, fallback, key, args);
         }
-        final Object o = callbacks.getOrDefault(new Description(key, args), a -> fallback).apply(args);
+        final Object o = match(key, args);
         if (o == null) {
             return getFallback(clazz, fallback, key, args);
         } else if (clazz.isAssignableFrom(o.getClass())) {
             return clazz.cast(o);
         }
         throw new RuntimeException(clazz.getSimpleName() + " is not assignable from " + o);
+    }
+
+    private Object match(final String key, final Object[] args) throws Throwable {
+        for (final Callback callback: callbacks) {
+            if (callback.matches(key, args)) {
+                return callback.fn.apply(args);
+            }
+        }
+        return null;
     }
 
     private <T> T getFallback(final Class<T> clazz,
@@ -74,12 +84,19 @@ public class Visitor<T> {
         return fallback;
     }
 
-    public void registerCallback(final Fn fn, final Description description) {
-        callbacks.put(description, fn);
+    public void registerCallback(final Fn fn, final String key, final List<Predicate<Object>> args) {
+        for (int i = 0; i < callbacks.size(); i++) {
+            if (callbacks.get(i).key.equals(key)) {
+                callbacks.set(i, new Callback(key, args, fn));
+                return;
+            }
+        }
+        callbacks.add(new Callback(key, args, fn));
     }
 
     public void reset() {
         tracker.reset();
+        callbacks.clear();
     }
 
     public Tracker getTracker() {
@@ -132,6 +149,30 @@ public class Visitor<T> {
 
     public Object invokeL(final String key, final Object... args) throws Throwable {
         return run(Object.class, null, key, args);
+    }
+
+    private static final class Callback {
+        private final String key;
+        private final List<Predicate<Object>> args;
+        private final Fn fn;
+
+        public Callback(final String key, final List<Predicate<Object>> args, final Fn fn) {
+            this.key = key;
+            this.args = args;
+            this.fn = fn;
+        }
+
+        public boolean matches(final String name, final Object[] args) {
+            if (this.args.size() != args.length || !this.key.equals(name)) {
+                return false;
+            }
+            for (int i = 0; i < args.length; i++) {
+                if (!this.args.get(i).test(args[i])) {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 
     public static final class Description {

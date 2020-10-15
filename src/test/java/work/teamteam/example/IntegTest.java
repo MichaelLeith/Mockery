@@ -17,6 +17,8 @@
 package work.teamteam.example;
 
 import org.junit.jupiter.api.Test;
+import work.teamteam.mock.Matchers;
+import work.teamteam.mock.Mock;
 import work.teamteam.mock.Mockery;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -57,6 +59,22 @@ public class IntegTest {
         protected String test(final String woo) {
             return woo;
         }
+
+        protected String intAcc(final int j) {
+            return "woo";
+        }
+
+        public String intAcc(final String first, final long second, final int j) {
+            return "woo";
+        }
+
+        public String intAcc(final String first, final double second, final int j) {
+            return "woo";
+        }
+
+        public String intAcc(final boolean first, final double second, final long third, final int j) {
+            return "woo";
+        }
     }
 
     public static final class Final {}
@@ -96,6 +114,33 @@ public class IntegTest {
         Mockery.verify(impl, 0).test("woo");
         Mockery.reset(impl);
         Mockery.verify(impl, 0).test("welp");
+    }
+
+    @Test
+    void testArgumentMatchers() throws Exception {
+        final Foo impl = Mockery.mock(Foo.class);
+        Mockery.when(impl.test(Matchers.any())).thenReturn("welp");
+        assertEquals("welp", impl.test("welp"));
+        assertEquals("welp", impl.test("lol"));
+        assertEquals("welp", impl.test(null));
+
+        Mockery.when(impl.intAcc(Matchers.anyInt())).thenReturn("welp");
+        assertEquals("welp", impl.intAcc(-1));
+        assertEquals("welp", impl.intAcc(0));
+        assertEquals("welp", impl.intAcc(1));
+
+        Mockery.when(impl.intAcc(Matchers.matchesInt(i -> i >= 0))).thenReturn("welp2");
+        assertNull(impl.intAcc(-1));
+        assertEquals("welp2", impl.intAcc(0));
+        assertEquals("welp2", impl.intAcc(1));
+
+        Mockery.when(impl.intAcc(Matchers.any(String.class),
+                Matchers.matchesLong(i -> i >= 0),
+                Matchers.eq(0))).thenReturn("welp3");
+        assertEquals("welp3", impl.intAcc("foo", 0, 0));
+        assertNull(impl.intAcc("foo", -1, 0));
+        assertNull(impl.intAcc("foo", 1, 1));
+        assertNull(impl.intAcc(null, 1, 0));
     }
 
     @Test
