@@ -20,9 +20,7 @@ import org.objectweb.asm.Type;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
@@ -190,19 +188,6 @@ public class Visitor<T> {
 
         public Object[] getArgs() {
             return args;
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            final Description that = (Description) o;
-            return key.equals(that.key) && Arrays.equals(args, that.args);
-        }
-
-        @Override
-        public int hashCode() {
-            return 31 * Objects.hash(key) + Arrays.hashCode(args);
         }
     }
 

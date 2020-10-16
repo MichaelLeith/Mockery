@@ -23,6 +23,8 @@ import java.util.function.Predicate;
 
 // https://www.javadoc.io/doc/org.mockito/mockito-core/2.2.7/org/mockito/ArgumentMatchers.html
 public class Matchers {
+    private Matchers() {}
+
     private static List<Predicate<?>> args = new ArrayList<>(4);
 
     public static <T> T any() {

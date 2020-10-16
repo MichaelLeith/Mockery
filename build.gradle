@@ -31,13 +31,13 @@ jacocoTestCoverageVerification {
         rule {
             limit {
                 counter = 'BRANCH'
-                minimum = 0.710
+                minimum = 0.820
             }
         }
 
         rule {
             limit {
-                minimum = 0.850
+                minimum = 0.900
             }
         }
     }

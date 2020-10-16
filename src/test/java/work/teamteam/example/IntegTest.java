@@ -86,6 +86,23 @@ public class IntegTest {
     }
 
     @Test
+    void testVerifyThrowsOnFail() {
+        assertThrows(RuntimeException.class, () ->
+                Mockery.verify(Mockery.mock(Foo.class), 1).test("woo"));
+    }
+
+    @Test
+    void testVerify() throws Exception {
+        final Foo impl = Mockery.mock(Foo.class);
+        impl.intAcc(1);
+        impl.intAcc(1);
+        impl.intAcc(2);
+        Mockery.verify(impl, 2).intAcc(1);
+        Mockery.verify(impl, 0).intAcc(-1);
+        Mockery.verify(impl, 1).intAcc(2);
+    }
+
+    @Test
     void testSpyConcrete() throws Exception {
         final Foo foo = Mockery.spy(new Foo(1));
         assertEquals("woo", foo.test("woo"));
@@ -113,6 +130,24 @@ public class IntegTest {
         Mockery.verify(impl, 0).test("woo");
         Mockery.reset(impl);
         Mockery.verify(impl, 0).test("welp");
+
+        Mockery.when(impl.intAcc("lol", 1L, 0)).thenReturn("welp2");
+        Mockery.when(impl.intAcc("lol", 1L, 1)).thenReturn("welp3");
+        // @todo: can we support this?
+        assertNull(impl.intAcc("lol", 1L, 0));
+        assertEquals("welp3", impl.intAcc("lol", 1L, 1));
+        assertNull(impl.intAcc("lol", 1L, 2));
+        Mockery.verify(impl, 1).intAcc("lol", 1L, 0);
+    }
+
+    @Test
+    void testArgumentMatchersWithMixedArgs() throws Exception {
+        final Foo impl = Mockery.mock(Foo.class);
+        assertThrows(RuntimeException.class, () -> {
+            Mockery.when(impl.intAcc(Matchers.any(String.class),
+                    1L,
+                    Matchers.eq(0))).thenReturn("welp3");
+        });
     }
 
     @Test

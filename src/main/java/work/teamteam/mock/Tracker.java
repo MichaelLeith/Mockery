@@ -42,11 +42,6 @@ public final class Tracker {
         return new Mock(lastCall, hist.remove(hist.size() - 1));
     }
 
-    public static Mock last() {
-        final List<Visitor.Description> hist = lastCall.getTracker().callHistory;
-        return new Mock(lastCall, hist.get(hist.size() - 1));
-    }
-
     public Map<String, CallHistory> collect() {
         synchronized (this) {
             if (!callHistory.isEmpty() && size != callHistory.size()) {

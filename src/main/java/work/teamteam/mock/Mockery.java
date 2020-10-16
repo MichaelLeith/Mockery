@@ -30,6 +30,8 @@ import java.util.Arrays;
 import java.util.Objects;
 
 public class Mockery {
+    private Mockery() {}
+    
     private static <T> Class<? extends T> inject(final Class<T> clazz) throws Exception {
         final ClassWriter wr = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         final ClazzVisitor visitor = new ClazzVisitor(wr);
