@@ -46,7 +46,7 @@ public class Visitor<T> {
 
     private <T> T run(final Class<T> clazz, final T fallback, final String key, final Object... args) throws Throwable {
         if (!run(key, args)) {
-            return getFallback(clazz, fallback, key, args);
+            return fallback;
         }
         final Object o = match(key, args);
         if (o == null) {
@@ -57,7 +57,7 @@ public class Visitor<T> {
         throw new RuntimeException(clazz.getSimpleName() + " is not assignable from " + o);
     }
 
-    private Object match(final String key, final Object[] args) throws Throwable {
+    private Object match(final String key, final Object... args) throws Throwable {
         for (final Callback callback: callbacks) {
             if (callback.matches(key, args)) {
                 return callback.fn.apply(args);
@@ -77,7 +77,7 @@ public class Visitor<T> {
                     return clazz.cast(method.invoke(impl, args));
                 }
             }
-            throw new RuntimeException("Should not happen");
+            throw new RuntimeException("Should not happen, missing method " + key);
         }
         return fallback;
     }
@@ -110,7 +110,7 @@ public class Visitor<T> {
     }
 
     public boolean invokeZ(final String key, final Object... args) throws Throwable {
-        return run(boolean.class, false, key, args);
+        return run(Boolean.class, false, key, args);
     }
 
     public byte invokeB(final String key, final Object... args) throws Throwable {
@@ -141,8 +141,8 @@ public class Visitor<T> {
         return run(Double.class, 0.0, key, args);
     }
 
-    public void invokeV(final String key, final Object... args) {
-        run(key, args);
+    public void invokeV(final String key, final Object... args) throws Throwable {
+        run(Void.class, null, key, args);
     }
 
     public Object invokeL(final String key, final Object... args) throws Throwable {
@@ -160,7 +160,7 @@ public class Visitor<T> {
             this.fn = fn;
         }
 
-        public boolean matches(final String name, final Object[] args) {
+        public boolean matches(final String name, final Object... args) {
             if (this.args.size() != args.length || !this.key.equals(name)) {
                 return false;
             }
@@ -177,7 +177,7 @@ public class Visitor<T> {
         private final String key;
         private final Object[] args;
 
-        public Description(final String key, final Object[] args) {
+        public Description(final String key, final Object... args) {
             this.key = key;
             this.args = args;
         }

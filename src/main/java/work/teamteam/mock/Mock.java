@@ -20,19 +20,20 @@ import org.objenesis.ObjenesisStd;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class Mock {
     private final List<Visitor.Fn> state;
 
-    public Mock(final Visitor last, final Visitor.Description description) {
+    public Mock(final Visitor<?> last, final Visitor.Description description) {
         this.state = new ArrayList<>();
-        List<Predicate<?>> matchers = Matchers.getMatchers();
+        List<Predicate<Object>> matchers = Matchers.getMatchers();
         if (matchers.isEmpty()) {
             matchers = new ArrayList<>(description.getArgs().length);
             for (final Object arg: description.getArgs()) {
-                matchers.add(a -> a.equals(arg));
+                matchers.add(arg == null ? Objects::isNull : arg::equals);
             }
         } else if (description.getArgs().length != matchers.size()) {
             throw new RuntimeException("Not all arguments mocked, you must use eq for literals with Matchers");

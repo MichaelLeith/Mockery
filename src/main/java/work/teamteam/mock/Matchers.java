@@ -19,13 +19,16 @@ package work.teamteam.mock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.DoublePredicate;
+import java.util.function.IntPredicate;
+import java.util.function.LongPredicate;
 import java.util.function.Predicate;
 
 // https://www.javadoc.io/doc/org.mockito/mockito-core/2.2.7/org/mockito/ArgumentMatchers.html
 public class Matchers {
     private Matchers() {}
 
-    private static List<Predicate<?>> args = new ArrayList<>(4);
+    private static List<Predicate<Object>> args = new ArrayList<>(4);
 
     public static <T> T any() {
         return matches(a -> true);
@@ -44,86 +47,150 @@ public class Matchers {
     }
 
     public static byte anyByte() {
-        return matchesByte(Objects::nonNull);
+        return matchesByte(a -> true);
     }
 
     public static char anyChar() {
-        return matchesChar(Objects::nonNull);
+        return matchesChar(a -> true);
     }
 
     public static short anyShort() {
-        return matchesShort(a -> false);
+        return matchesShort(a -> true);
     }
 
     public static int anyInt() {
-        return matchesInt(Objects::nonNull);
+        return matchesInt(a -> true);
     }
 
     public static long anyLong() {
-        return matchesLong(Objects::nonNull);
+        return matchesLong(a -> true);
     }
 
     public static float anyFloat() {
-        return matchesFloat(Objects::nonNull);
+        return matchesFloat(a -> true);
     }
 
     public static double anyDouble() {
-        return matchesDouble(Objects::nonNull);
+        return matchesDouble(a -> true);
+    }
+
+    public static boolean eq(final boolean t) {
+        matchesBool(a -> a == t);
+        return t;
+    }
+
+    public static byte eq(final byte t) {
+        matchesByte(a -> a == t);
+        return t;
+    }
+
+    public static char eq(final char t) {
+        matchesChar(a -> a == t);
+        return t;
+    }
+
+    public static short eq(final short t) {
+        matchesShort(a -> a == t);
+        return t;
+    }
+
+    public static int eq(final int t) {
+        matchesInt(a -> a == t);
+        return t;
+    }
+
+    public static long eq(final long t) {
+        matchesLong(a -> a == t);
+        return t;
+    }
+
+    public static float eq(final float t) {
+        matchesFloat(a -> a == t);
+        return t;
+    }
+
+    public static double eq(final double t) {
+        matchesDouble(a -> a == t);
+        return t;
     }
 
     public static <T> T eq(final T t) {
-        matches(a -> a.equals(t));
+        matches(t == null ? Objects::isNull : t::equals);
         return t;
     }
 
     public static <T> T matches(final Predicate<T> condition) {
-        args.add(condition);
+        args.add((Predicate<Object>) condition);
         return null;
     }
 
-    public static boolean matchesBool(final Predicate<Boolean> condition) {
-        args.add(condition);
+    public static boolean matchesBool(final BooleanPredicate condition) {
+        args.add(i -> typeCheck(i, Boolean.class) && condition.test((boolean) i));
         return false;
     }
 
-    public static byte matchesByte(final Predicate<Byte> condition) {
-        args.add(condition);
+    public static byte matchesByte(final BytePredicate condition) {
+        args.add(i -> typeCheck(i, Byte.class) && condition.test((byte) i));
         return 0;
     }
 
-    public static char matchesChar(final Predicate<Character> condition) {
-        args.add(condition);
+    public static char matchesChar(final CharPredicate condition) {
+        args.add(i -> typeCheck(i, Character.class) && condition.test((char) i));
         return 0;
     }
 
-    public static short matchesShort(final Predicate<Short> condition) {
-        args.add(condition);
+    public static short matchesShort(final ShortPredicate condition) {
+        args.add(i -> typeCheck(i, Short.class) && condition.test((short) i));
         return 0;
     }
 
-    public static int matchesInt(final Predicate<Integer> condition) {
-        args.add(condition);
+    public static int matchesInt(final IntPredicate condition) {
+        args.add(i -> typeCheck(i, Integer.class) && condition.test((int) i));
         return 0;
     }
 
-    public static long matchesLong(final Predicate<Long> condition) {
-        args.add(condition);
+    public static long matchesLong(final LongPredicate condition) {
+        args.add(i -> typeCheck(i, Long.class) && condition.test((long) i));
         return 0;
     }
 
-    public static float matchesFloat(final Predicate<Float> condition) {
-        args.add(condition);
+    public static float matchesFloat(final FloatPredicate condition) {
+        args.add(i -> typeCheck(i, Float.class) && condition.test((float) i));
         return 0.0f;
     }
 
-    public static double matchesDouble(final Predicate<Double> condition) {
-        args.add(condition);
+    public static double matchesDouble(final DoublePredicate condition) {
+        args.add(i -> typeCheck(i, Double.class) && condition.test((double) i));
         return 0.0;
     }
 
-    static List<Predicate<?>> getMatchers() {
-        final List<Predicate<?>> cpy = args;
+    private static boolean typeCheck(final Object i, final Class<?> clazz) {
+        return i != null && clazz.isAssignableFrom(i.getClass());
+    }
+
+    static List<Predicate<Object>> getMatchers() {
+        final List<Predicate<Object>> cpy = args;
         args = new ArrayList<>(4);
         return cpy;
+    }
+
+    public interface FloatPredicate {
+        boolean test(final float f);
+    }
+
+    public interface ShortPredicate {
+        boolean test(final short f);
+    }
+
+    public interface CharPredicate {
+        boolean test(final char f);
+    }
+
+    public interface BytePredicate {
+        boolean test(final byte f);
+    }
+
+    public interface BooleanPredicate {
+        boolean test(final boolean f);
     }
 }

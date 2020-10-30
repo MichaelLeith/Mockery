@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package work.teamteam.example;
+package work.teamteam.mock;
 
 import org.junit.jupiter.api.Test;
-import work.teamteam.mock.Matchers;
-import work.teamteam.mock.Mockery;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class IntegTest {
+public class MockeryTest {
     public interface TestInterface {
         String string();
         double[] arr();
@@ -50,8 +48,15 @@ public class IntegTest {
     public static class Foo {
         private final int i;
 
+        public Foo(int i, int j) {
+            this.i = i + j;
+        }
+
         public Foo(int i) {
             this.i = i;
+        }
+
+        public void testWithVoid(Void foo) {
         }
 
         // @note: won't work with package-private, can't override them outside of the same pkg... interesting
@@ -72,6 +77,15 @@ public class IntegTest {
         }
 
         public String intAcc(final boolean first, final double second, final long third, final int j) {
+            return "woo";
+        }
+
+        public String mediumArgLength(final boolean first,
+                                      final double second,
+                                      final long third,
+                                      final int j,
+                                      final int k,
+                                      final int l) {
             return "woo";
         }
     }
@@ -100,6 +114,26 @@ public class IntegTest {
         Mockery.verify(impl, 2).intAcc(1);
         Mockery.verify(impl, 0).intAcc(-1);
         Mockery.verify(impl, 1).intAcc(2);
+    }
+
+    @Test
+    void testSpyMissingConstructor() {
+        assertThrows(RuntimeException.class, () -> Mockery.spy(Foo.class, 1, 2, 3, 4));
+    }
+
+    @Test
+    void testResetNonMockFails() {
+        assertThrows(RuntimeException.class, () -> Mockery.reset(new Foo(1)));
+    }
+
+    @Test
+    void testWhenNonMock() {
+        assertThrows(RuntimeException.class, () -> Mockery.when(new Foo(1)));
+    }
+
+    @Test
+    void testVerifyNonMock() {
+        assertThrows(RuntimeException.class, () -> Mockery.verify(new Foo(1), 1));
     }
 
     @Test

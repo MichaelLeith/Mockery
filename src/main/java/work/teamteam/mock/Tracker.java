@@ -21,16 +21,18 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public final class Tracker {
-    private static volatile Visitor lastCall = null;
+    private static volatile Visitor<?> lastCall = null;
     private final List<Visitor.Description> callHistory = new ArrayList<>();
     private final Map<String, CallHistory> callHistories = new HashMap<>();
     private int size = 0;
 
     // key should be name + signature
-    public boolean visit(final Visitor visitor, final String key, final Object... args) {
+    public boolean visit(final Visitor<?> visitor, final String key, final Object... args) {
         lastCall = visitor;
+        // @todo: improve our concurrency. global lock = bad :/
         synchronized (this) {
             callHistory.add(new Visitor.Description(key, args));
         }
@@ -60,7 +62,7 @@ public final class Tracker {
         return callHistories;
     }
 
-    public long get(final String key, final Object[] args) {
+    public long get(final String key, final Object... args) {
         final CallHistory hist = collect().get(key);
         return hist == null ? 0L : hist.get(args);
     }
@@ -73,7 +75,7 @@ public final class Tracker {
     }
 
     // @todo: thread safety?
-    private static final class CallHistory {
+    public static final class CallHistory {
         private final Map<List<Object>, Long> perArgset;
 
         public CallHistory(final Object... args) {
@@ -87,8 +89,21 @@ public final class Tracker {
             perArgset.put(wrapper, l == null ? 1L : l + 1);
         }
 
-        public long get(final Object[] args) {
+        public long get(final Object... args) {
             return perArgset.getOrDefault(Arrays.asList(args), 0L);
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final CallHistory that = (CallHistory) o;
+            return perArgset.equals(that.perArgset);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(perArgset);
         }
     }
 }
