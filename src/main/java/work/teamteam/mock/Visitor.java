@@ -103,7 +103,8 @@ public class Visitor<T> {
 
     public void setVerification(final Verifier verifier) {
         this.verifier = (k, a) -> {
-            verifier.verify(tracker, k, a);
+            final List<Predicate<Object>> matchers = Matchers.getMatchers();
+            verifier.verify(tracker, k, matchers, a);
             this.verifier = DEFAULT_VERIFIER;
             return false;
         };

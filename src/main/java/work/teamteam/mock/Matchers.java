@@ -16,6 +16,8 @@
 
 package work.teamteam.mock;
 
+import org.objectweb.asm.Type;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -26,6 +28,19 @@ import java.util.function.Predicate;
 
 // https://www.javadoc.io/doc/org.mockito/mockito-core/2.2.7/org/mockito/ArgumentMatchers.html
 public class Matchers {
+    private static final Object[] DEFAULTS = new Object[] {
+            null,
+            false,
+            0,
+            0,
+            0,
+            0,
+            0.f,
+            0L,
+            0.0,
+            null,
+            null
+    };
     private Matchers() {}
 
     private static List<Predicate<Object>> args = new ArrayList<>(4);
@@ -117,6 +132,16 @@ public class Matchers {
     public static <T> T eq(final T t) {
         matches(t == null ? Objects::isNull : t::equals);
         return t;
+    }
+
+    public static <T> T capture(final Capture<T> capture) {
+        args.add(capture::add);
+        // @todo: add to other matches
+        final int sort = Type.getType(capture.getClazz()).getSort();
+        if (DEFAULTS.length > sort) {
+            return (T) DEFAULTS[sort];
+        }
+        throw new RuntimeException("class " + capture.getClazz().getName() + " not currently supported");
     }
 
     public static <T> T matches(final Predicate<T> condition) {

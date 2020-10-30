@@ -18,6 +18,8 @@ package work.teamteam.mock;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
+
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class VerifierTest {
@@ -27,7 +29,7 @@ public class VerifierTest {
         final Visitor<?> visitor = new Visitor<>(null);
         tracker.visit(visitor, "foo");
         tracker.visit(visitor, "foo");
-        new Verifier(2).verify(tracker, "foo");
+        new Verifier(2).verify(tracker, "foo", Collections.emptyList());
     }
 
     @Test
@@ -36,7 +38,7 @@ public class VerifierTest {
         final Visitor<?> visitor = new Visitor<>(null);
         tracker.visit(visitor, "foo");
         assertThrows(RuntimeException.class, () ->
-                new Verifier(2).verify(tracker, "foo"));
+                new Verifier(2).verify(tracker, "foo", Collections.emptyList()));
     }
 
     @Test
@@ -44,9 +46,9 @@ public class VerifierTest {
         final Tracker tracker = new Tracker();
         final Visitor<?> visitor = new Visitor<>(null);
         tracker.visit(visitor, "foo2");
-        new Verifier(1).verify(tracker, "foo2");
+        new Verifier(1).verify(tracker, "foo2", Collections.emptyList());
         assertThrows(RuntimeException.class, () ->
-                new Verifier(1).verify(tracker, "foo"));
+                new Verifier(1).verify(tracker, "foo", Collections.emptyList()));
     }
 
     @Test
@@ -54,8 +56,8 @@ public class VerifierTest {
         final Tracker tracker = new Tracker();
         final Visitor<?> visitor = new Visitor<>(null);
         tracker.visit(visitor, "foo", 1);
-        new Verifier(1).verify(tracker, "foo", 1);
+        new Verifier(1).verify(tracker, "foo", Collections.emptyList(), 1);
         assertThrows(RuntimeException.class, () ->
-                new Verifier(1).verify(tracker, "foo"));
+                new Verifier(1).verify(tracker, "foo", Collections.emptyList()));
     }
 }

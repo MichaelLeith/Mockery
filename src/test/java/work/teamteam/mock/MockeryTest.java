@@ -18,6 +18,8 @@ package work.teamteam.mock;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -114,6 +116,34 @@ public class MockeryTest {
         Mockery.verify(impl, 2).intAcc(1);
         Mockery.verify(impl, 0).intAcc(-1);
         Mockery.verify(impl, 1).intAcc(2);
+    }
+
+    @Test
+    void testCapture() throws Exception {
+        final Foo impl = Mockery.mock(Foo.class);
+        impl.intAcc(1);
+        impl.intAcc(1);
+        impl.intAcc(2);
+        final Capture<Integer> capture = Capture.of(int.class);
+        Mockery.verify(impl, 2).intAcc(1);
+        Mockery.verify(impl, 3).intAcc(Matchers.capture(capture));
+        assertEquals(2, capture.tail());
+        //assertEquals(Arrays.asList(1, 1, 2), capture.captured());
+        Mockery.verify(impl, 0).intAcc(-1);
+        Mockery.verify(impl, 1).intAcc(2);
+
+        final Capture<Long> capture1 = Capture.of(long.class);
+        final Capture<Integer> capture2 = Capture.of(int.class);
+        impl.intAcc("foo", 1L, 2);
+        impl.intAcc("bar", 2L, 3);
+        impl.intAcc("foo", 3L, 4);
+        Mockery.verify(impl, 2).intAcc(Matchers.eq("foo"),
+                Matchers.capture(capture1),
+                Matchers.capture(capture2));
+        assertEquals(3, capture1.tail());
+        //assertEquals(Arrays.asList(1L, 3L), capture1.captured());
+        assertEquals(4, capture2.tail());
+        //assertEquals(Arrays.asList(2, 4), capture2.captured());
     }
 
     @Test

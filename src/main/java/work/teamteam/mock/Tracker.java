@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 public final class Tracker {
     private static volatile Visitor<?> lastCall = null;
@@ -65,6 +66,30 @@ public final class Tracker {
     public long get(final String key, final Object... args) {
         final CallHistory hist = collect().get(key);
         return hist == null ? 0L : hist.get(args);
+    }
+
+    public long getMatches(final String key, final List<Predicate<Object>> args) {
+        final CallHistory hist = collect().get(key);
+        if (hist == null) {
+            return 0L;
+        }
+        long numMatches = 0;
+        // @todo: doesn't work completely because we don't retain order
+        for (final Map.Entry<List<Object>, Long> entry: hist.perArgset.entrySet()) {
+            if (entry.getKey().size() == args.size() && matches(args, entry.getKey())) {
+                numMatches += entry.getValue();
+            }
+        }
+        return numMatches;
+    }
+
+    private boolean matches(final List<Predicate<Object>> conditions, final List<Object> args) {
+        for (int i = 0; i < args.size(); i++) {
+            if (!conditions.get(i).test(args.get(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public void reset() {

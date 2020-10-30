@@ -16,6 +16,11 @@
 
 package work.teamteam.mock;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Predicate;
+
 public class Verifier {
     private final long numCalls;
 
@@ -23,8 +28,21 @@ public class Verifier {
         this.numCalls = numCalls;
     }
 
-    public void verify(final Tracker tracker, final String key, final Object... args) {
-        final long calls = tracker.get(key, args);
+    public void verify(final Tracker tracker,
+                       final String key,
+                       List<Predicate<Object>> matchers,
+                       final Object... args) {
+        if (matchers.isEmpty()) {
+            final long calls = tracker.get(key, args);
+            if (numCalls != calls) {
+                throw new RuntimeException("expected " + numCalls + ", but was called " + calls + " times");
+            }
+            return;
+        } else if (matchers.size() != args.length) {
+            throw new RuntimeException("Not all arguments mocked, you must use eq for literals with Matchers");
+        }
+        // get matches from the tracker
+        final long calls = tracker.getMatches(key, matchers);
         if (numCalls != calls) {
             throw new RuntimeException("expected " + numCalls + ", but was called " + calls + " times");
         }
