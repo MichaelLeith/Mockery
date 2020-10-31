@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-package work.teamteam.mock;
+package work.teamteam.mock.internal;
 
 import org.objectweb.asm.Type;
+import work.teamteam.mock.Defaults;
+import work.teamteam.mock.Matchers;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
@@ -30,56 +33,41 @@ public class Visitor<T> {
     private final List<Callback> callbacks;
     private final Tracker tracker;
     private final T impl;
+    private final Defaults defaults;
     private BiPredicate<String, Object[]> verifier;
 
-    public Visitor(final T impl) {
+    public Visitor(final T impl, final Defaults defaults) {
         this.callbacks = new ArrayList<>();
         this.tracker = new Tracker();
         this.impl = impl;
+        this.defaults = Objects.requireNonNull(defaults);
         this.verifier = DEFAULT_VERIFIER;
     }
 
-    // returns true if we've visited the tracker
-    private boolean run(final String key, final Object... args) {
-        return verifier.test(key, args) && tracker.visit(this, key, args);
-    }
-
-    private <T> T run(final Class<T> clazz, final T fallback, final String key, final Object... args) throws Throwable {
-        if (!run(key, args)) {
-            return fallback;
+    public Object run(final String key, final Class<?> clazz, final Object... args) throws Throwable {
+        // returns true if we've visited the tracker
+        if (!(verifier.test(key, args) && tracker.visit(this, key, args))) {
+            return defaults.get(clazz);
         }
-        final Object o = match(key, args);
-        if (o == null) {
-            return getFallback(clazz, fallback, key, args);
-        } else if (clazz.isAssignableFrom(o.getClass())) {
-            return clazz.cast(o);
-        }
-        throw new RuntimeException(clazz.getSimpleName() + " is not assignable from " + o);
-    }
-
-    private Object match(final String key, final Object... args) throws Throwable {
         for (final Callback callback: callbacks) {
             if (callback.matches(key, args)) {
                 return callback.fn.apply(args);
             }
         }
-        return null;
+        return getFallback(clazz, key, args);
     }
 
-    private <T> T getFallback(final Class<T> clazz,
-                              final T fallback,
-                              final String key,
-                              final Object... args) throws Throwable{
+    private Object getFallback(final Class<?> clazz, final String key, final Object... args) throws Throwable {
         if (impl != null) {
             for (final Method method: impl.getClass().getDeclaredMethods()) {
                 if (key.equals(method.getName() + Type.getMethodDescriptor(method))) {
                     method.setAccessible(true);
-                    return clazz.cast(method.invoke(impl, args));
+                    return method.invoke(impl, args);
                 }
             }
             throw new RuntimeException("Should not happen, missing method " + key);
         }
-        return fallback;
+        return defaults.get(clazz);
     }
 
     public void registerCallback(final Fn fn, final String key, final List<Predicate<Object>> args) {
@@ -103,51 +91,10 @@ public class Visitor<T> {
 
     public void setVerification(final Verifier verifier) {
         this.verifier = (k, a) -> {
-            final List<Predicate<Object>> matchers = Matchers.getMatchers();
-            verifier.verify(tracker, k, matchers, a);
+            verifier.verify(tracker, k, Matchers.getMatchers(), a);
             this.verifier = DEFAULT_VERIFIER;
             return false;
         };
-    }
-
-    public boolean invokeZ(final String key, final Object... args) throws Throwable {
-        return run(Boolean.class, false, key, args);
-    }
-
-    public byte invokeB(final String key, final Object... args) throws Throwable {
-        return run(Byte.class, (byte) 0, key, args);
-    }
-
-    public char invokeC(final String key, final Object... args) throws Throwable {
-        return run(Character.class, (char) 0, key, args);
-    }
-
-    public short invokeS(final String key, final Object... args) throws Throwable {
-        return run(Short.class, (short) 0, key, args);
-    }
-
-    public int invokeI(final String key, final Object... args) throws Throwable {
-        return run(Integer.class, 0, key, args);
-    }
-
-    public long invokeJ(final String key, final Object... args) throws Throwable {
-        return run(Long.class, 0L, key, args);
-    }
-
-    public float invokeF(final String key, final Object... args) throws Throwable {
-        return run(Float.class, 0f, key, args);
-    }
-
-    public double invokeD(final String key, final Object... args) throws Throwable {
-        return run(Double.class, 0.0, key, args);
-    }
-
-    public void invokeV(final String key, final Object... args) throws Throwable {
-        run(Void.class, null, key, args);
-    }
-
-    public Object invokeL(final String key, final Object... args) throws Throwable {
-        return run(Object.class, null, key, args);
     }
 
     private static final class Callback {

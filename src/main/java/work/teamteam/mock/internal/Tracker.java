@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package work.teamteam.mock;
+package work.teamteam.mock.internal;
+
+import work.teamteam.mock.Mock;
 
 import java.util.ArrayList;
 import java.util.Arrays;

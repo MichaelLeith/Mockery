@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package work.teamteam.mock;
+package work.teamteam.mock.internal;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Predicate;
 
 public class Verifier {

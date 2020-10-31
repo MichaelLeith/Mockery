@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
-package work.teamteam.mock;
+package work.teamteam.mock.internal;
 
 import org.junit.jupiter.api.Test;
+import work.teamteam.mock.Defaults;
+import work.teamteam.mock.internal.Tracker;
+import work.teamteam.mock.internal.Verifier;
+import work.teamteam.mock.internal.Visitor;
 
 import java.util.Collections;
 
@@ -26,7 +30,7 @@ public class VerifierTest {
     @Test
     void testMatch() {
         final Tracker tracker = new Tracker();
-        final Visitor<?> visitor = new Visitor<>(null);
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
         tracker.visit(visitor, "foo");
         tracker.visit(visitor, "foo");
         new Verifier(2).verify(tracker, "foo", Collections.emptyList());
@@ -35,7 +39,7 @@ public class VerifierTest {
     @Test
     void testFail() {
         final Tracker tracker = new Tracker();
-        final Visitor<?> visitor = new Visitor<>(null);
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
         tracker.visit(visitor, "foo");
         assertThrows(RuntimeException.class, () ->
                 new Verifier(2).verify(tracker, "foo", Collections.emptyList()));
@@ -44,7 +48,7 @@ public class VerifierTest {
     @Test
     void testFailDifferentFnName() {
         final Tracker tracker = new Tracker();
-        final Visitor<?> visitor = new Visitor<>(null);
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
         tracker.visit(visitor, "foo2");
         new Verifier(1).verify(tracker, "foo2", Collections.emptyList());
         assertThrows(RuntimeException.class, () ->
@@ -54,7 +58,7 @@ public class VerifierTest {
     @Test
     void testFailDifferentArgs() {
         final Tracker tracker = new Tracker();
-        final Visitor<?> visitor = new Visitor<>(null);
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
         tracker.visit(visitor, "foo", 1);
         new Verifier(1).verify(tracker, "foo", Collections.emptyList(), 1);
         assertThrows(RuntimeException.class, () ->

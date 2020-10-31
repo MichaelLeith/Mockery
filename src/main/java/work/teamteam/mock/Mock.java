@@ -17,6 +17,7 @@
 package work.teamteam.mock;
 
 import org.objenesis.ObjenesisStd;
+import work.teamteam.mock.internal.Visitor;
 
 import java.util.ArrayList;
 import java.util.List;

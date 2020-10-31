@@ -16,8 +16,6 @@
 
 package work.teamteam.mock;
 
-import org.objectweb.asm.Type;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -26,24 +24,10 @@ import java.util.function.IntPredicate;
 import java.util.function.LongPredicate;
 import java.util.function.Predicate;
 
-// https://www.javadoc.io/doc/org.mockito/mockito-core/2.2.7/org/mockito/ArgumentMatchers.html
 public class Matchers {
-    private static final Object[] DEFAULTS = new Object[] {
-            null,
-            false,
-            0,
-            0,
-            0,
-            0,
-            0.f,
-            0L,
-            0.0,
-            null,
-            null
-    };
-    private Matchers() {}
+    private static final List<Predicate<Object>> REGISTER = new ArrayList<>(4);
 
-    private static List<Predicate<Object>> args = new ArrayList<>(4);
+    private Matchers() {}
 
     public static <T> T any() {
         return matches(a -> true);
@@ -135,67 +119,62 @@ public class Matchers {
     }
 
     public static <T> T capture(final Capture<T> capture) {
-        args.add(capture::add);
-        // @todo: add to other matches
-        final int sort = Type.getType(capture.getClazz()).getSort();
-        if (DEFAULTS.length > sort) {
-            return (T) DEFAULTS[sort];
-        }
-        throw new RuntimeException("class " + capture.getClazz().getName() + " not currently supported");
+        REGISTER.add(capture::add);
+        return Defaults.Impl.IMPL.get(capture.getClazz());
     }
 
     public static <T> T matches(final Predicate<T> condition) {
-        args.add((Predicate<Object>) condition);
+        REGISTER.add((Predicate<Object>) condition);
         return null;
     }
 
     public static boolean matchesBool(final BooleanPredicate condition) {
-        args.add(i -> typeCheck(i, Boolean.class) && condition.test((boolean) i));
-        return false;
+        REGISTER.add(i -> typeCheck(i, Boolean.class) && condition.test((boolean) i));
+        return Defaults.Impl.IMPL.get(boolean.class);
     }
 
     public static byte matchesByte(final BytePredicate condition) {
-        args.add(i -> typeCheck(i, Byte.class) && condition.test((byte) i));
-        return 0;
+        REGISTER.add(i -> typeCheck(i, Byte.class) && condition.test((byte) i));
+        return Defaults.Impl.IMPL.get(byte.class);
     }
 
     public static char matchesChar(final CharPredicate condition) {
-        args.add(i -> typeCheck(i, Character.class) && condition.test((char) i));
-        return 0;
+        REGISTER.add(i -> typeCheck(i, Character.class) && condition.test((char) i));
+        return Defaults.Impl.IMPL.get(char.class);
     }
 
     public static short matchesShort(final ShortPredicate condition) {
-        args.add(i -> typeCheck(i, Short.class) && condition.test((short) i));
-        return 0;
+        REGISTER.add(i -> typeCheck(i, Short.class) && condition.test((short) i));
+        return Defaults.Impl.IMPL.get(short.class);
     }
 
     public static int matchesInt(final IntPredicate condition) {
-        args.add(i -> typeCheck(i, Integer.class) && condition.test((int) i));
-        return 0;
+        REGISTER.add(i -> typeCheck(i, Integer.class) && condition.test((int) i));
+        return Defaults.Impl.IMPL.get(int.class);
     }
 
     public static long matchesLong(final LongPredicate condition) {
-        args.add(i -> typeCheck(i, Long.class) && condition.test((long) i));
-        return 0;
+        REGISTER.add(i -> typeCheck(i, Long.class) && condition.test((long) i));
+        return Defaults.Impl.IMPL.get(long.class);
     }
 
     public static float matchesFloat(final FloatPredicate condition) {
-        args.add(i -> typeCheck(i, Float.class) && condition.test((float) i));
-        return 0.0f;
+        REGISTER.add(i -> typeCheck(i, Float.class) && condition.test((float) i));
+        return Defaults.Impl.IMPL.get(float.class);
     }
 
     public static double matchesDouble(final DoublePredicate condition) {
-        args.add(i -> typeCheck(i, Double.class) && condition.test((double) i));
-        return 0.0;
+        REGISTER.add(i -> typeCheck(i, Double.class) && condition.test((double) i));
+        return Defaults.Impl.IMPL.get(double.class);
     }
 
     private static boolean typeCheck(final Object i, final Class<?> clazz) {
         return i != null && clazz.isAssignableFrom(i.getClass());
     }
 
-    static List<Predicate<Object>> getMatchers() {
-        final List<Predicate<Object>> cpy = args;
-        args = new ArrayList<>(4);
+    public static List<Predicate<Object>> getMatchers() {
+        final List<Predicate<Object>> cpy = new ArrayList<>(REGISTER);
+        REGISTER.clear();
         return cpy;
     }
 

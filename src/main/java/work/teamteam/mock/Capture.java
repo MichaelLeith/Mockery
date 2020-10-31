@@ -20,6 +20,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Used alongside Mockery.verify to "capture" arguments previously passed to a method
+ * @param <T>
+ */
 public class Capture<T> {
     private final Class<T> clazz;
     private final List<Object> capture;
@@ -33,22 +37,34 @@ public class Capture<T> {
         return new Capture<>(clazz);
     }
 
-    public boolean add(final Object t) {
-        synchronized (this) {
-            capture.add(t);
-        }
-        return true;
-    }
-
-    public Class<T> getClazz() {
-        return clazz;
-    }
-
+    /**
+     * Returns the last value captured
+     * @return The last captured value, or null
+     */
     public T tail() {
         return capture.isEmpty() ? null : (T) capture.get(capture.size() - 1);
     }
 
+    /**
+     * Returns all captured values.
+     * @return All captured values
+     */
     public List<T> captured() {
         return (List<T>) capture;
+    }
+
+    /**
+     * INTERNAL: adds an object to the capture list
+     * @param t object ot add
+     * @return true if the object was successfully added
+     */
+    boolean add(final Object t) {
+        synchronized (this) {
+            return capture.add(t);
+        }
+    }
+
+    Class<T> getClazz() {
+        return clazz;
     }
 }

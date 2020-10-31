@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
-package work.teamteam.mock;
+package work.teamteam.mock.internal;
 
 import org.junit.jupiter.api.Test;
+import work.teamteam.mock.Defaults;
+import work.teamteam.mock.Mock;
+import work.teamteam.mock.internal.Tracker;
+import work.teamteam.mock.internal.Visitor;
 
 import java.util.Collections;
 import java.util.Map;
@@ -32,7 +36,7 @@ public class TrackerTest {
     @Test
     void testVisit() {
         final Tracker tracker = new Tracker();
-        final Visitor<?> visitor = new Visitor<>(null);
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
         tracker.visit(visitor, "foo");
         tracker.visit(visitor, "foo", 1);
         tracker.visit(visitor, "foo", 1);
@@ -58,7 +62,7 @@ public class TrackerTest {
     @Test
     void testReset() {
         final Tracker tracker = new Tracker();
-        final Visitor<?> visitor = new Visitor<>(null);
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
         tracker.visit(visitor, "foo");
         assertFalse(tracker.collect().isEmpty());
         tracker.reset();
@@ -68,7 +72,7 @@ public class TrackerTest {
     @Test
     void testGet() {
         final Tracker tracker = new Tracker();
-        final Visitor<?> visitor = new Visitor<>(null);
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
         tracker.visit(visitor, "foo");
         assertEquals(1, tracker.get("foo"));
         assertEquals(0, tracker.get("foo", "bar"));
@@ -84,7 +88,7 @@ public class TrackerTest {
 
     @Test
     void testRollbackFailsWithEmptyHistory() {
-        final Visitor<?> visitor = new Visitor<>(null);
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
         final Tracker tracker = visitor.getTracker();
         tracker.visit(visitor, "foo");
         tracker.reset();
@@ -93,7 +97,7 @@ public class TrackerTest {
 
     @Test
     void testRollbackLast() throws Throwable {
-        final Visitor<?> visitor = new Visitor<>(null);
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
         final Tracker tracker = visitor.getTracker();
         tracker.visit(visitor, "foo");
         tracker.visit(visitor, "foo");
@@ -101,23 +105,23 @@ public class TrackerTest {
         assertFalse(tracker.collect().isEmpty());
         assertEquals(Collections.singletonMap("foo", new Tracker.CallHistory()), tracker.collect());
 
-        assertNull(visitor.invokeL("foo"));
+        assertNull(visitor.run("foo", Integer.class));
         mock.thenReturn(100);
-        assertEquals(100, visitor.invokeL("foo"));
+        assertEquals(100, visitor.run("foo", Integer.class));
     }
 
     @Test
     void testCollectDoesntClearHistory() throws Throwable {
-        final Visitor<?> visitor = new Visitor<>(null);
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
         final Tracker tracker = visitor.getTracker();
         tracker.visit(visitor, "foo");
         tracker.visit(visitor, "foo");
         tracker.collect();
         final Mock mock = Tracker.rollbackLast();
 
-        assertNull(visitor.invokeL("foo"));
+        assertNull(visitor.run("foo", Integer.class));
         mock.thenReturn(100);
-        assertEquals(100, visitor.invokeL("foo"));
+        assertEquals(100, visitor.run("foo", Integer.class));
     }
 
     @Test

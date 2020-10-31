@@ -18,8 +18,6 @@ package work.teamteam.mock;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -108,7 +106,7 @@ public class MockeryTest {
     }
 
     @Test
-    void testVerify() throws Exception {
+    void testVerify() {
         final Foo impl = Mockery.mock(Foo.class);
         impl.intAcc(1);
         impl.intAcc(1);
@@ -119,7 +117,7 @@ public class MockeryTest {
     }
 
     @Test
-    void testCapture() throws Exception {
+    void testCapture() {
         final Foo impl = Mockery.mock(Foo.class);
         impl.intAcc(1);
         impl.intAcc(1);
@@ -167,7 +165,7 @@ public class MockeryTest {
     }
 
     @Test
-    void testSpyConcrete() throws Exception {
+    void testSpyConcrete() {
         final Foo foo = Mockery.spy(new Foo(1));
         assertEquals("woo", foo.test("woo"));
         Mockery.verify(foo, 1).test("woo");
@@ -187,7 +185,17 @@ public class MockeryTest {
     }
 
     @Test
-    void testMockConcrete() throws Exception {
+    void testSpyWithWrongArgType() {
+        assertThrows(RuntimeException.class, () -> Mockery.spy(Foo.class, "lol", 1));
+    }
+
+    @Test
+    void testSpyWithTooManyArgType() {
+        assertThrows(RuntimeException.class, () -> Mockery.spy(Foo.class, 1, 1, 1));
+    }
+
+    @Test
+    void testMockConcrete() {
         final Foo impl = Mockery.mock(Foo.class);
         assertNull(impl.test("welp"));
         Mockery.verify(impl, 1).test("welp");
@@ -205,7 +213,7 @@ public class MockeryTest {
     }
 
     @Test
-    void testArgumentMatchersWithMixedArgs() throws Exception {
+    void testArgumentMatchersWithMixedArgs() {
         final Foo impl = Mockery.mock(Foo.class);
         assertThrows(RuntimeException.class, () -> {
             Mockery.when(impl.intAcc(Matchers.any(String.class),
@@ -242,7 +250,7 @@ public class MockeryTest {
     }
 
     @Test
-    void testMockInterface() throws Exception {
+    void testMockInterface() {
         final TestInterface impl = Mockery.mock(TestInterface.class);
         assertNull(impl.string());
         assertNull(impl.arr());
@@ -287,5 +295,32 @@ public class MockeryTest {
         Mockery.when(impl.i()).thenThrow(IllegalAccessException.class).thenReturn(100);
         assertThrows(IllegalAccessException.class, impl::i);
         assertEquals(100, impl.i());
+    }
+
+    @Test
+    void testMockWithCustomDefault() {
+        final TestInterface impl = Mockery.mock(TestInterface.class, new DefaultsOverride());
+        assertEquals("foo", impl.string());
+        assertEquals(100, impl.i());
+        assertNull(impl.arr());
+        assertEquals(0, impl.s());
+        assertEquals(0, impl.c());
+        assertEquals(0, impl.b());
+        assertEquals(0.0f, impl.f());
+        assertEquals(0.0, impl.d());
+        assertEquals(0, impl.l());
+
+    }
+
+    private static final class DefaultsOverride implements Defaults {
+        @Override
+        public <T> T get(final Class<T> clazz) {
+            if (String.class.equals(clazz)) {
+                return (T) "foo";
+            } else if (int.class.equals(clazz)) {
+                return (T) Integer.valueOf(100);
+            }
+            return Impl.IMPL.get(clazz);
+        }
     }
 }
