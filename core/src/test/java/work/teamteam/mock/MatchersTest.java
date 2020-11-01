@@ -16,21 +16,29 @@
 
 package work.teamteam.mock;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import work.teamteam.mock.internal.Tracker;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.function.DoublePredicate;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class MatchersTest {
+    @BeforeEach
+    void setUp() {
+        // reset all global state
+        Matchers.getMatchers();
+    }
+
     @ParameterizedTest
     @EnumSource(Match.class)
     void testMatcher(final Match match) {
+        Matchers.getMatchers();
         match.fn.get();
         final List<Predicate<Object>> predicates = Matchers.getMatchers();
         assertEquals(match.matches, predicates.get(0).test(match.obj));

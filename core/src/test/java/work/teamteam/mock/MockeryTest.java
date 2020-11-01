@@ -16,6 +16,7 @@
 
 package work.teamteam.mock;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -23,6 +24,11 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class MockeryTest {
+    @BeforeEach
+    void setUp() {
+        Mockery.reset();
+    }
+
     public interface TestInterface {
         String string();
         double[] arr();
@@ -114,6 +120,11 @@ public class MockeryTest {
         Mockery.verify(impl, 2).intAcc(1);
         Mockery.verify(impl, 0).intAcc(-1);
         Mockery.verify(impl, 1).intAcc(2);
+        Mockery.verify(impl, Times.eq(1)).intAcc(2);
+        Mockery.verify(impl, Times.ge(1)).intAcc(2);
+        Mockery.verify(impl, Times.le(1)).intAcc(2);
+        Mockery.verify(impl, Times.lt(2)).intAcc(2);
+        Mockery.verify(impl, Times.gt(0)).intAcc(2);
     }
 
     @Test
@@ -223,7 +234,7 @@ public class MockeryTest {
     }
 
     @Test
-    void testArgumentMatchers() throws Exception {
+    void testArgumentMatchers() {
         final Foo impl = Mockery.mock(Foo.class);
         Mockery.when(impl.test(Matchers.any())).thenReturn("welp");
         assertEquals("welp", impl.test("welp"));
@@ -247,6 +258,54 @@ public class MockeryTest {
         assertNull(impl.intAcc("foo", -1, 0));
         assertNull(impl.intAcc("foo", 1, 1));
         assertNull(impl.intAcc(null, 1, 0));
+    }
+
+    @Test
+    void testWhenUsesLast() {
+        final Foo impl = Mockery.mock(Foo.class);
+        Mockery.when(impl.test(Matchers.eq("foo"))).thenReturn("1");
+        Mockery.when(impl.test(Matchers.eq("bar"))).thenReturn("2");
+        assertNull(impl.test("foo"));
+        assertEquals("2", impl.test("bar"));
+        assertNull(impl.test(null));
+    }
+
+    @Test
+    void testCanUseWhenOnMultipleFunctions() {
+        final Foo impl = Mockery.mock(Foo.class);
+        Mockery.when(impl.intAcc(Matchers.anyInt())).thenReturn("welp");
+        Mockery.when(impl.test("bar")).thenReturn("2");
+        assertEquals("welp", impl.intAcc(-1));
+        assertEquals("2", impl.test("bar"));
+    }
+
+    @Test
+    void testMocksCanBeUsedInWhenThenReturn() {
+        final Foo impl = Mockery.mock(Foo.class);
+        Mockery.when(impl.test(Matchers.any())).thenReturn("foo");
+        Mockery.when(impl.intAcc(Matchers.anyInt())).thenReturn(impl.test("well"));
+        assertEquals("foo", impl.intAcc(-1));
+    }
+
+    @Test
+    void testMocksCanBeUsedInWhenParameters() {
+        final Foo impl = Mockery.mock(Foo.class);
+        Mockery.when(impl.test(Matchers.any())).thenReturn("foo");
+        Mockery.when(impl.test(impl.test("bar"))).thenReturn("foo");
+        assertEquals("foo", impl.test("foo"));
+        assertNull(impl.test("bar"));
+    }
+
+    @Test
+    void testMockReplaces() {
+        final Foo impl = Mockery.mock(Foo.class);
+        Mockery.when(impl.test(Matchers.any())).thenReturn("foo");
+        Mockery.when(impl.test(Matchers.any())).thenReturn("bar");
+        assertEquals("bar", impl.test("lol"));
+
+        Mockery.when(impl.test("welp")).thenReturn("bar");
+        assertNull(impl.test("lol"));
+        assertEquals("bar", impl.test("welp"));
     }
 
     @Test

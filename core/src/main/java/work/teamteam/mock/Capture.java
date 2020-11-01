@@ -41,6 +41,7 @@ public class Capture<T> {
      * Returns the last value captured
      * @return The last captured value, or null
      */
+    @SuppressWarnings("unchecked")
     public T tail() {
         return capture.isEmpty() ? null : (T) capture.get(capture.size() - 1);
     }
@@ -49,6 +50,7 @@ public class Capture<T> {
      * Returns all captured values.
      * @return All captured values
      */
+    @SuppressWarnings("unchecked")
     public List<T> captured() {
         return (List<T>) capture;
     }

@@ -1,2 +1,2 @@
 rootProject.name = 'Mockery'
-
+include 'core'

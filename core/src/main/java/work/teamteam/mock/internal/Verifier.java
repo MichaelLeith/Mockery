@@ -17,32 +17,41 @@
 package work.teamteam.mock.internal;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.function.LongPredicate;
 import java.util.function.Predicate;
 
+/**
+ * Used to verify how many times a method was called
+ */
 public class Verifier {
-    private final long numCalls;
+    private final LongPredicate numCalls;
 
-    public Verifier(final long numCalls) {
-        this.numCalls = numCalls;
+    public Verifier(final LongPredicate numCalls) {
+        this.numCalls = Objects.requireNonNull(numCalls);
     }
 
+    /**
+     * Checks that the given key & matchers (or args) were seen by the tracker the specified number of times
+     * @param tracker tracker to get data from
+     * @param key method name + description to test
+     * @param matchers optional matchers to check, if empty args are used instead
+     * @param args raw arguments to check for
+     */
     public void verify(final Tracker tracker,
                        final String key,
                        List<Predicate<Object>> matchers,
                        final Object... args) {
+        final long calls;
         if (matchers.isEmpty()) {
-            final long calls = tracker.get(key, args);
-            if (numCalls != calls) {
-                throw new RuntimeException("expected " + numCalls + ", but was called " + calls + " times");
-            }
-            return;
+            calls = tracker.get(key, args);
         } else if (matchers.size() != args.length) {
             throw new RuntimeException("Not all arguments mocked, you must use eq for literals with Matchers");
+        } else {
+            calls = tracker.getMatches(key, matchers);
         }
-        // get matches from the tracker
-        final long calls = tracker.getMatches(key, matchers);
-        if (numCalls != calls) {
-            throw new RuntimeException("expected " + numCalls + ", but was called " + calls + " times");
+        if (!numCalls.test(calls)) {
+            throw new RuntimeException("expected " + numCalls.toString() + ", but was called " + calls + " times");
         }
     }
 }

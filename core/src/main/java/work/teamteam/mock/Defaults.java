@@ -27,8 +27,12 @@ import org.objectweb.asm.Type;
 public interface Defaults {
     <T> T get(final Class<T> clazz);
 
+    /**
+     * Default implementation of Defaults.
+     */
     final class Impl implements Defaults {
         public static final Impl IMPL = new Impl();
+        private static final Object OBJECT_DEFAULT = null;
         private static final Object[] PRIMITIVE_DEFAULTS = new Object[] {
                 null,
                 false,
@@ -43,10 +47,11 @@ public interface Defaults {
 
         private Impl() {}
 
+        @SuppressWarnings("unchecked")
         @Override
         public <T> T get(final Class<T> clazz) {
             final int sort = Type.getType(clazz).getSort();
-            return PRIMITIVE_DEFAULTS.length > sort ? (T) PRIMITIVE_DEFAULTS[sort] : null;
+            return (T) (PRIMITIVE_DEFAULTS.length > sort ? PRIMITIVE_DEFAULTS[sort] : OBJECT_DEFAULT);
         }
     }
 }

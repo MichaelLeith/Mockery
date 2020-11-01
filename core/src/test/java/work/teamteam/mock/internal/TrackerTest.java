@@ -16,14 +16,15 @@
 
 package work.teamteam.mock.internal;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import work.teamteam.mock.Defaults;
 import work.teamteam.mock.Mock;
-import work.teamteam.mock.internal.Tracker;
-import work.teamteam.mock.internal.Visitor;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -33,6 +34,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TrackerTest {
+    @BeforeEach
+    void setUp() {
+        // reset all global state
+        Tracker.resetLast();
+    }
+
     @Test
     void testVisit() {
         final Tracker tracker = new Tracker();
@@ -77,6 +84,39 @@ public class TrackerTest {
         assertEquals(1, tracker.get("foo"));
         assertEquals(0, tracker.get("foo", "bar"));
         assertEquals(0, tracker.get("bar"));
+    }
+
+    @Test
+    void testGetMatches() {
+        final Tracker tracker = new Tracker();
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
+        tracker.visit(visitor, "foo", 1);
+        assertEquals(1, tracker.getMatches("foo", Collections.singletonList(i -> (int) i == 1)));
+        assertEquals(0, tracker.getMatches("foo", Collections.singletonList(i -> (int) i == 2)));
+        assertEquals(0, tracker.getMatches("bar", Collections.emptyList()));
+        assertEquals(0, tracker.getMatches("bar", Arrays.asList(Objects::nonNull, Objects::nonNull)));
+    }
+
+    @Test
+    void testGetMatchesMultipleResults() {
+        final Tracker tracker = new Tracker();
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
+        tracker.visit(visitor, "foo", 1, "foo");
+        tracker.visit(visitor, "foo", 2, "foo");
+        tracker.visit(visitor, "foo", 1, "foo");
+        assertEquals(2, tracker.getMatches("foo", Arrays.asList(i -> (int) i == 1, Objects::nonNull)));
+        assertEquals(3, tracker.getMatches("foo", Arrays.asList(Objects::nonNull, Objects::nonNull)));
+    }
+
+    @Test
+    void testGetMatchesHandlesDifferentArgLengths() {
+        final Tracker tracker = new Tracker();
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
+        tracker.visit(visitor, "foo", 1, "foo", 1);
+        tracker.visit(visitor, "foo", 2, "foo");
+        tracker.visit(visitor, "foo", 1, "foo");
+        assertEquals(1, tracker.getMatches("foo", Arrays.asList(i -> (int) i == 1, Objects::nonNull)));
+        assertEquals(2, tracker.getMatches("foo", Arrays.asList(Objects::nonNull, Objects::nonNull)));
     }
 
     @Test

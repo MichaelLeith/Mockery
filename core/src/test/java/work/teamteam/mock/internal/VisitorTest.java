@@ -18,8 +18,7 @@ package work.teamteam.mock.internal;
 
 import org.junit.jupiter.api.Test;
 import work.teamteam.mock.Defaults;
-import work.teamteam.mock.internal.Verifier;
-import work.teamteam.mock.internal.Visitor;
+import work.teamteam.mock.Times;
 
 import java.util.Collections;
 
@@ -101,7 +100,7 @@ public class VisitorTest {
         final Impl impl = new Impl();
         final Visitor<?> visitor = new Visitor<>(impl, Defaults.Impl.IMPL);
         assertEquals(impl.withArgs(), visitor.run("withArgs()I", int.class));
-        visitor.setVerification(new Verifier(1));
+        visitor.setVerification(new Verifier(Times.eq(1)));
         assertEquals(0, visitor.run("withArgs()I", int.class));
         assertEquals(impl.withArgs(), visitor.run("withArgs()I", int.class));
     }
@@ -112,7 +111,7 @@ public class VisitorTest {
         final Visitor<?> visitor = new Visitor<>(impl, Defaults.Impl.IMPL);
         visitor.registerCallback(a -> 2, "withArgs()I", Collections.emptyList());
         assertEquals(2,visitor.run("withArgs()I", int.class));
-        visitor.setVerification(new Verifier(1));
+        visitor.setVerification(new Verifier(Times.eq(1)));
         assertEquals(0, visitor.run("withArgs()I", int.class));
         assertEquals(2, visitor.run("withArgs()I", int.class));
     }

@@ -6,6 +6,10 @@ This is a quick prototype to learn how Mocking frameworks (like Mockito) in Java
 
 * Cleanup Spy/Matcher logic
 * Explore Instrumentation
+* Support disabling tracking
+* Test + Optimize concurrency support
+* Support ordered Capture (per thread?)
+* Testing of default interface/base class methods
 
 ## Dependencies
 
@@ -74,7 +78,8 @@ Object/array - null
 
 ## Limitations
 
-* Can't mock final classes (this requires Instrumentation)
-* Can't mock constructors
-* Can't mock package local methods
+* Can't mock final classes/constructors/package local methods (this requires Instrumentation)
+* Captured arguments aren't ordered - instead we guarantee that each argument will be in the capture list at least once
+** This data is internally available in Tracker's, just not exposed yet
+* No annotation support
 * ...
