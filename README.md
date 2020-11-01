@@ -79,7 +79,6 @@ Object/array - null
 ## Limitations
 
 * Can't mock final classes/constructors/package local methods (this requires Instrumentation)
-* Captured arguments aren't ordered - instead we guarantee that each argument will be in the capture list at least once
-** This data is internally available in Tracker's, just not exposed yet
+* Captured arguments aren't ordered - instead we guarantee that each argument will be in the capture list at least once. This data is internally available in Tracker's, just not exposed yet
 * No annotation support
 * ...
