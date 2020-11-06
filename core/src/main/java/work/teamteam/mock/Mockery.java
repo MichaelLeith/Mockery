@@ -28,8 +28,9 @@ import work.teamteam.mock.internal.Verifier;
 import work.teamteam.mock.internal.Visitor;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.LongPredicate;
 
@@ -41,6 +42,10 @@ import java.util.function.LongPredicate;
  * * to record the number of times certain methods were called with given arguments
  */
 public class Mockery {
+    // @todo: thread safety
+    private static final Map<Class<?>, Class<?>> TYPE_CACHE = new HashMap<>();
+    private static final ObjenesisStd OBJENESIS_STD = new ObjenesisStd();
+
     private Mockery() {}
 
     /**
@@ -187,11 +192,16 @@ public class Mockery {
     @SuppressWarnings("unchecked")
     private static <T> T build(final Class<?> clazz, final T impl, final Defaults defaults) {
         try {
-            final Class<T> mock = (Class<T>) inject(clazz);
-            final T instance = new ObjenesisStd().newInstance(mock);
-            final Field visitor = mock.getDeclaredField("visitor");
-            visitor.setAccessible(true);
-            visitor.set(instance, new Visitor<>(impl, defaults));
+            Class<?> mock = TYPE_CACHE.get(clazz);
+            if (mock == null) {
+                mock = inject(clazz);
+                TYPE_CACHE.put(clazz, mock);
+            }
+            final T instance = OBJENESIS_STD.newInstance((Class<T>) mock);
+            ((Trackable) instance).setVisitor(new Visitor<>(impl, defaults));
+            //final Field visitor = mock.getDeclaredField("visitor");
+            //visitor.setAccessible(true);
+            //visitor.set(instance, new Visitor<>(impl, defaults));
             return instance;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -216,6 +226,7 @@ public class Mockery {
      */
     public interface Trackable {
         Visitor<?> getVisitor(final Sentinel s);
+        void setVisitor(final Visitor<?> visitor);
     }
 
     /**
@@ -301,6 +312,18 @@ public class Mockery {
                 vis.visitVarInsn(Opcodes.ALOAD, 0); // this
                 vis.visitFieldInsn(Opcodes.GETFIELD, clazz, IMPL, IMPL_DESC);
                 vis.visitInsn(Opcodes.ARETURN);
+                vis.visitMaxs(1, 1);
+            }
+            {
+                final MethodVisitor vis = visitor.visitMethod(Opcodes.ACC_PUBLIC, "setVisitor",
+                        "(" + Type.getDescriptor(Visitor.class) + ")V",
+                        null,
+                        null);
+                vis.visitCode();
+                vis.visitVarInsn(Opcodes.ALOAD, 0); // this
+                vis.visitVarInsn(Opcodes.ALOAD, 1);
+                vis.visitFieldInsn(Opcodes.PUTFIELD, clazz, IMPL, IMPL_DESC);
+                vis.visitInsn(Opcodes.RETURN);
                 vis.visitMaxs(1, 1);
             }
         }

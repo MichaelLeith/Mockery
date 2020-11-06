@@ -36,7 +36,7 @@ public final class Tracker {
     // e.g when(foo.something(bar).doReturn(...)); will be tracking foo because it was last called
     private static volatile Visitor<?> lastCall = null;
     private final List<Visitor.Description> callHistory = new ArrayList<>();
-    private final Map<String, CallHistory> callHistories = new HashMap<>();
+    private Map<String, CallHistory> callHistories = null;
     private int size = 0;
 
     /**
@@ -73,6 +73,9 @@ public final class Tracker {
      */
     public Map<String, CallHistory> collect() {
         synchronized (this) {
+            if (callHistories == null) {
+                callHistories = new HashMap<>();
+            }
             if (!callHistory.isEmpty() && size != callHistory.size()) {
                 size = callHistory.size();
                 callHistories.clear();
@@ -138,7 +141,7 @@ public final class Tracker {
     public void reset() {
         synchronized (this) {
             callHistory.clear();
-            callHistories.clear();
+            callHistories = null;
         }
     }
 

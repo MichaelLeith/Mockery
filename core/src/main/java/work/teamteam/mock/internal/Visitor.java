@@ -34,14 +34,14 @@ import java.util.function.Predicate;
 public class Visitor<T> {
     private static final BiPredicate<String, Object[]> DEFAULT_VERIFIER = (k, a) -> true;
     // @note: mutation is not thread safe, we assume all your setup is run before using the mock
-    private final List<Callback> callbacks;
+    private List<Callback> callbacks;
     private final Tracker tracker;
     private final T impl;
     private final Defaults defaults;
     private BiPredicate<String, Object[]> verifier;
 
     public Visitor(final T impl, final Defaults defaults) {
-        this.callbacks = new ArrayList<>();
+        this.callbacks = null;
         this.tracker = new Tracker();
         this.impl = impl;
         this.defaults = Objects.requireNonNull(defaults);
@@ -67,9 +67,11 @@ public class Visitor<T> {
             return defaults.get(clazz);
         }
         tracker.visit(this, key, args);
-        for (final Callback callback: callbacks) {
-            if (callback.matches(key, args)) {
-                return callback.fn.apply(args);
+        if (callbacks != null) {
+            for (final Callback callback : callbacks) {
+                if (callback.matches(key, args)) {
+                    return callback.fn.apply(args);
+                }
             }
         }
         return getFallback(key, clazz, args);
@@ -105,6 +107,9 @@ public class Visitor<T> {
      * @param args list of conditions for using this predicate
      */
     public void registerCallback(final Fn fn, final String key, final List<Predicate<Object>> args) {
+        if (callbacks == null) {
+            callbacks = new ArrayList<>(4);
+        }
         for (int i = 0; i < callbacks.size(); i++) {
             if (callbacks.get(i).key.equals(key)) {
                 callbacks.set(i, new Callback(key, args, fn));
@@ -119,7 +124,7 @@ public class Visitor<T> {
      */
     public void reset() {
         tracker.reset();
-        callbacks.clear();
+        callbacks = null;
     }
 
     public Tracker getTracker() {
