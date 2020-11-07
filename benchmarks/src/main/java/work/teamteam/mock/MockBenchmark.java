@@ -81,6 +81,20 @@ public class MockBenchmark {
 
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
+    public void benchmarkCallWhenPrimitiveMockery(final Mocks mocks, final Blackhole blackhole) {
+        Mockery.when(mocks.mockeryTarget.doSomethingElse()).thenReturn(100);
+        blackhole.consume(mocks.mockeryTarget.doSomethingElse());
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    public void benchmarkCallWhenPrimitiveMockito(final Mocks mocks, final Blackhole blackhole) {
+        Mockito.when(mocks.mockitoTarget.doSomethingElse()).thenReturn(100);
+        blackhole.consume(mocks.mockitoTarget.doSomething());
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
     public void benchmarkCallMockedMethodMockery(final Mocks mocks, final Blackhole blackhole) {
         blackhole.consume(mocks.mockeryTarget.doSomething());
     }

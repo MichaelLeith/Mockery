@@ -32,7 +32,7 @@ public class MockTest {
     void testMockFailsWithMissingArgs() {
         assertTrue(Matchers.getMatchers().isEmpty());
         Matchers.any();
-        assertThrows(RuntimeException.class, () -> new Mock(new Visitor<>(null, Defaults.Impl.IMPL),
+        assertThrows(RuntimeException.class, () -> new Mock<>(new Visitor<>(null, Defaults.Impl.IMPL),
                 "foo", 1, null));
     }
 
@@ -40,7 +40,7 @@ public class MockTest {
     void testMockWithoutMatchers() throws Throwable {
         assertTrue(Matchers.getMatchers().isEmpty());
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        final Mock mock = new Mock(visitor, "foo", 1, null);
+        final Mock<Integer> mock = new Mock<>(visitor, "foo", 1, null);
 
         final List<Object[]> fooList = new ArrayList<>();
         final List<Object[]> barList = new ArrayList<>();
@@ -60,7 +60,7 @@ public class MockTest {
         Matchers.eq(1);
         Matchers.any();
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        final Mock mock = new Mock(visitor, "foo", 1, null);
+        final Mock<Integer> mock = new Mock<>(visitor, "foo", 1, null);
 
         final List<Object[]> fooList = new ArrayList<>();
         final List<Object[]> barList = new ArrayList<>();
@@ -83,7 +83,7 @@ public class MockTest {
         Matchers.eq(1);
         Matchers.any();
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        final Mock mock = new Mock(visitor, "foo", 1, null);
+        final Mock<Integer> mock = new Mock<>(visitor, "foo", 1, null);
 
         mock.thenReturn(100);
         final List<Object[]> fooList = new ArrayList<>();
@@ -99,7 +99,7 @@ public class MockTest {
         Matchers.eq(1);
         Matchers.any();
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        final Mock mock = new Mock(visitor, "foo", 1, null);
+        final Mock<Integer> mock = new Mock<>(visitor, "foo", 1, null);
 
         mock.thenAnswer(i -> {
             assertEquals(1, i[0]);
@@ -119,7 +119,7 @@ public class MockTest {
         Matchers.eq(1);
         Matchers.any();
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        final Mock mock = new Mock(visitor, "foo", 1, null);
+        final Mock<Integer> mock = new Mock<>(visitor, "foo", 1, null);
 
         mock.thenThrow(new RuntimeException());
         final List<Object[]> fooList = new ArrayList<>();
@@ -135,7 +135,7 @@ public class MockTest {
         Matchers.eq(1);
         Matchers.any();
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        final Mock mock = new Mock(visitor, "foo", 1, null);
+        final Mock<Integer> mock = new Mock<>(visitor, "foo", 1, null);
 
         mock.thenThrow(IllegalAccessException.class);
         final List<Object[]> fooList = new ArrayList<>();

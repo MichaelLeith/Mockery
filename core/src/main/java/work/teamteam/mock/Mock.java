@@ -35,7 +35,7 @@ import java.util.function.Predicate;
  * e.g when(foo.doSomething(anyInt())).thenReturn(100).thenThrow(RuntimeException.class)
  * will return 100, then all future calls will throw a RuntimeException
  */
-public class Mock {
+public class Mock<T> {
     // list of "thenX" methods that have been registered to this mock
     private final List<Visitor.Fn> state;
 
@@ -60,7 +60,7 @@ public class Mock {
                         .apply(a), key, matchers);
     }
 
-    private Mock add(final Visitor.Fn fn) {
+    private Mock<T> add(final Visitor.Fn fn) {
         state.add(fn);
         return this;
     }
@@ -70,7 +70,7 @@ public class Mock {
      * @param o value to return
      * @return this mock for chaining
      */
-    public Mock thenReturn(final Object o) {
+    public Mock<T> thenReturn(final T o) {
         return add(a -> o);
     }
 
@@ -79,7 +79,7 @@ public class Mock {
      * @param fn method to be called. The parameters recieved will be passed to this as an Object[]
      * @return this mock for chaining
      */
-    public Mock thenAnswer(final Function<Object[], Object> fn) {
+    public Mock<T> thenAnswer(final Function<Object[], T> fn) {
         return add(fn::apply);
     }
 
@@ -88,7 +88,7 @@ public class Mock {
      * @param e exception to throw
      * @return this mock for chaining
      */
-    public Mock thenThrow(final Class<? extends Throwable> e) {
+    public Mock<T> thenThrow(final Class<? extends Throwable> e) {
         return thenThrow(new ObjenesisStd().newInstance(e));
     }
 
@@ -97,7 +97,7 @@ public class Mock {
      * @param e exception to throw
      * @return this mock for chaining
      */
-    public <T extends Throwable> Mock thenThrow(final T e) {
+    public <S extends Throwable> Mock<T> thenThrow(final S e) {
         return add(a -> { throw e; });
     }
 }

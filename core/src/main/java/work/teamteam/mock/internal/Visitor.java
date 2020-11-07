@@ -169,10 +169,10 @@ public class Visitor<T> {
         }
     }
 
-    public static Mock rollbackLast() {
+    public static <T> Mock<T> rollbackLast() {
         synchronized (DEFAULT_VERIFIER) {
             final List<Object[]> last = lastCall.trackers.get(lastCall.lastKey);
-            return new Mock(lastCall, lastCall.lastKey, last.remove(last.size() - 1));
+            return new Mock<>(lastCall, lastCall.lastKey, last.remove(last.size() - 1));
         }
     }
 

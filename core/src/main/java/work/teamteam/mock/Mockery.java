@@ -126,7 +126,7 @@ public class Mockery {
      * @return a Mock for specifying your overrides
      */
     @SuppressWarnings("unused")
-    public static Mock when(final Object o) {
+    public static <T> Mock<T> when(final T o) {
         return Visitor.rollbackLast();
     }
 
