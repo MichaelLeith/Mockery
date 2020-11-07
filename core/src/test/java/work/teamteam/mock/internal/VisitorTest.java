@@ -20,12 +20,15 @@ import org.junit.jupiter.api.Test;
 import work.teamteam.mock.Defaults;
 import work.teamteam.mock.Times;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -34,46 +37,46 @@ public class VisitorTest {
     void testUsesImpl() throws Throwable {
         final Impl impl = new Impl();
         final Visitor<?> visitor = new Visitor<>(impl, Defaults.Impl.IMPL);
-        assertEquals(impl.string(), visitor.run("string()Ljava/lang/String;", String.class));
-        assertArrayEquals(impl.arr(), (double[]) visitor.run("arr()[D", double[].class));
-        visitor.run("v()V", void.class);
+        assertEquals(impl.string(), visitor.run(new ArrayList<>(), "string()Ljava/lang/String;", String.class));
+        assertArrayEquals(impl.arr(), (double[]) visitor.run(new ArrayList<>(), "arr()[D", double[].class));
+        visitor.run(new ArrayList<>(), "v()V", void.class);
         assertEquals(1, impl.count);
-        assertEquals(impl.i(), visitor.run("i()I", int.class));
-        assertEquals(impl.s(), visitor.run("s()S", short.class));
-        assertEquals(impl.c(), visitor.run("c()C", char.class));
-        assertEquals(impl.b(), visitor.run("b()B", byte.class));
-        assertEquals(impl.f(), visitor.run("f()F", float.class));
-        assertEquals(impl.l(), visitor.run("l()J", long.class));
-        assertEquals(impl.d(), visitor.run("d()D", double.class));
-        assertEquals(impl.bool(), visitor.run("bool()Z", boolean.class));
+        assertEquals(impl.i(), visitor.run(new ArrayList<>(), "i()I", int.class));
+        assertEquals(impl.s(), visitor.run(new ArrayList<>(), "s()S", short.class));
+        assertEquals(impl.c(), visitor.run(new ArrayList<>(), "c()C", char.class));
+        assertEquals(impl.b(), visitor.run(new ArrayList<>(), "b()B", byte.class));
+        assertEquals(impl.f(), visitor.run(new ArrayList<>(), "f()F", float.class));
+        assertEquals(impl.l(), visitor.run(new ArrayList<>(), "l()J", long.class));
+        assertEquals(impl.d(), visitor.run(new ArrayList<>(), "d()D", double.class));
+        assertEquals(impl.bool(), visitor.run(new ArrayList<>(), "bool()Z", boolean.class));
 
         // test we throw on the wrong return type
-        assertThrows(RuntimeException.class, () ->  visitor.run("string()Ljava/util/Optional;", int.class));
+        assertThrows(RuntimeException.class, () ->  visitor.run(new ArrayList<>(), "string()Ljava/util/Optional;", int.class));
     }
 
     @Test
     void testFallbacks() throws Throwable {
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        assertNull(visitor.run("string()Ljava/lang/String;", String.class));
-        assertNull(visitor.run("arr()[D", double[].class));
-        visitor.run("v()V", void.class);
-        assertEquals(0, visitor.run("i()I", int.class));
-        assertEquals((short) 0, visitor.run("s()S", short.class));
-        assertEquals((char) 0, visitor.run("c()C", char.class));
-        assertEquals((byte) 0, visitor.run("b()B", byte.class));
-        assertEquals(0.0f, visitor.run("f()F", float.class));
-        assertEquals(0L, visitor.run("l()J", long.class));
-        assertEquals(0.0, visitor.run("d()D", double.class));
-        assertFalse((boolean) visitor.run("bool()Z", boolean.class));
+        assertNull(visitor.run(new ArrayList<>(), "string()Ljava/lang/String;", String.class));
+        assertNull(visitor.run(new ArrayList<>(), "arr()[D", double[].class));
+        visitor.run(new ArrayList<>(), "v()V", void.class);
+        assertEquals(0, visitor.run(new ArrayList<>(), "i()I", int.class));
+        assertEquals((short) 0, visitor.run(new ArrayList<>(), "s()S", short.class));
+        assertEquals((char) 0, visitor.run(new ArrayList<>(), "c()C", char.class));
+        assertEquals((byte) 0, visitor.run(new ArrayList<>(), "b()B", byte.class));
+        assertEquals(0.0f, visitor.run(new ArrayList<>(), "f()F", float.class));
+        assertEquals(0L, visitor.run(new ArrayList<>(), "l()J", long.class));
+        assertEquals(0.0, visitor.run(new ArrayList<>(), "d()D", double.class));
+        assertFalse((boolean) visitor.run(new ArrayList<>(), "bool()Z", boolean.class));
     }
 
     @Test
     void testUsesImplWithArgs() throws Throwable {
         final Impl impl = new Impl();
         final Visitor<?> visitor = new Visitor<>(impl, Defaults.Impl.IMPL);
-        assertEquals(impl.withArgs(), visitor.run("withArgs()I", int.class));
-        assertEquals(impl.withArgs(2), visitor.run("withArgs(I)I", int.class, 2));
-        assertEquals(impl.withArgs(2L), visitor.run("withArgs(J)I", int.class, 2));
+        assertEquals(impl.withArgs(), visitor.run(new ArrayList<>(), "withArgs()I", int.class));
+        assertEquals(impl.withArgs(2), visitor.run(new ArrayList<>(), "withArgs(I)I", int.class, 2));
+        assertEquals(impl.withArgs(2L), visitor.run(new ArrayList<>(), "withArgs(J)I", int.class, 2));
     }
 
     @Test
@@ -81,10 +84,10 @@ public class VisitorTest {
         final Impl impl = new Impl();
         final Visitor<?> visitor = new Visitor<>(impl, Defaults.Impl.IMPL);
         visitor.registerCallback(a -> 10, "withArgs(I)I", Collections.singletonList(i -> (int) i == 1));
-        assertEquals(impl.withArgs(), visitor.run("withArgs()I", int.class));
-        assertEquals(10, visitor.run("withArgs(I)I", int.class, 1));
-        assertEquals(impl.withArgs(2), visitor.run("withArgs(I)I", int.class, 2));
-        assertEquals(impl.withArgs(2L), visitor.run("withArgs(J)I", int.class, 2));
+        assertEquals(impl.withArgs(), visitor.run(new ArrayList<>(), "withArgs()I", int.class));
+        assertEquals(10, visitor.run(new ArrayList<>(), "withArgs(I)I", int.class, 1));
+        assertEquals(impl.withArgs(2), visitor.run(new ArrayList<>(), "withArgs(I)I", int.class, 2));
+        assertEquals(impl.withArgs(2L), visitor.run(new ArrayList<>(), "withArgs(J)I", int.class, 2));
     }
 
     @Test
@@ -92,17 +95,18 @@ public class VisitorTest {
         final Impl impl = new Impl();
         final Visitor<?> visitor = new Visitor<>(impl, Defaults.Impl.IMPL);
         visitor.registerCallback(a -> "sad", "withArgs(I)I", Collections.singletonList(i -> (int) i == 1));
-        assertDoesNotThrow(() -> visitor.run("withArgs(I)I", int.class, 1));
+        assertDoesNotThrow(() -> visitor.run(new ArrayList<>(), "withArgs(I)I", int.class, 1));
     }
 
     @Test
     void testRunWithVerifier() throws Throwable {
         final Impl impl = new Impl();
         final Visitor<?> visitor = new Visitor<>(impl, Defaults.Impl.IMPL);
-        assertEquals(impl.withArgs(), visitor.run("withArgs()I", int.class));
+        final List<Object[]> hist = visitor.init("withArgs()I");
+        assertEquals(impl.withArgs(), visitor.run(hist, "withArgs()I", int.class));
         visitor.setVerification(new Verifier(Times.eq(1)));
-        assertEquals(0, visitor.run("withArgs()I", int.class));
-        assertEquals(impl.withArgs(), visitor.run("withArgs()I", int.class));
+        assertEquals(0, visitor.run(hist, "withArgs()I", int.class));
+        assertEquals(impl.withArgs(), visitor.run(hist, "withArgs()I", int.class));
     }
 
     @Test
@@ -110,10 +114,12 @@ public class VisitorTest {
         final Impl impl = new Impl();
         final Visitor<?> visitor = new Visitor<>(impl, Defaults.Impl.IMPL);
         visitor.registerCallback(a -> 2, "withArgs()I", Collections.emptyList());
-        assertEquals(2,visitor.run("withArgs()I", int.class));
+        final List<Object[]> calls = visitor.init("withArgs()I");
+        assertEquals(2,visitor.run(calls, "withArgs()I", int.class));
+
         visitor.setVerification(new Verifier(Times.eq(1)));
-        assertEquals(0, visitor.run("withArgs()I", int.class));
-        assertEquals(2, visitor.run("withArgs()I", int.class));
+        assertEquals(0, visitor.run(calls, "withArgs()I", int.class));
+        assertEquals(2, visitor.run(calls, "withArgs()I", int.class));
     }
 
     public static final class Impl {
@@ -174,5 +180,33 @@ public class VisitorTest {
         boolean bool() {
             return true;
         }
+    }
+
+
+    @Test
+    void testCallHistoryEquals() {
+        final Visitor.CallHistory a = new Visitor.CallHistory();
+        a.update(1, 2);
+        final Visitor.CallHistory b = new Visitor.CallHistory();
+        b.update(1, 2);
+        final Visitor.CallHistory c = new Visitor.CallHistory();
+        c.update(1);
+        final Visitor.CallHistory d = new Visitor.CallHistory();
+        d.update(1, 2);
+        d.update(1, 2);
+        final Visitor.CallHistory e = new Visitor.CallHistory();
+
+        assertNotEquals(a, null);
+        assertNotEquals(a, "foo");
+        assertEquals(a, a);
+        assertEquals(a.hashCode(), a.hashCode());
+        assertEquals(a, b);
+        assertEquals(a.hashCode(), b.hashCode());
+        assertNotEquals(a, c);
+        assertNotEquals(a.hashCode(), c.hashCode());
+        assertNotEquals(a, d);
+        assertNotEquals(a.hashCode(), d.hashCode());
+        assertNotEquals(a, e);
+        assertNotEquals(a.hashCode(), e.hashCode());
     }
 }

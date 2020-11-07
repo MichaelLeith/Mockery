@@ -19,6 +19,9 @@ package work.teamteam.mock;
 import org.junit.jupiter.api.Test;
 import work.teamteam.mock.internal.Visitor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -30,23 +33,25 @@ public class MockTest {
         assertTrue(Matchers.getMatchers().isEmpty());
         Matchers.any();
         assertThrows(RuntimeException.class, () -> new Mock(new Visitor<>(null, Defaults.Impl.IMPL),
-                new Visitor.Description("foo", 1, null)));
+                "foo", 1, null));
     }
 
     @Test
     void testMockWithoutMatchers() throws Throwable {
         assertTrue(Matchers.getMatchers().isEmpty());
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        final Mock mock = new Mock(visitor,
-                new Visitor.Description("foo", 1, null));
-        assertNull(visitor.run("foo", Object.class, 1, null));
-        assertNull(visitor.run("bar", Object.class, 1, null));
-        assertNull(visitor.run("foo", Object.class, 2, null));
+        final Mock mock = new Mock(visitor, "foo", 1, null);
+
+        final List<Object[]> fooList = new ArrayList<>();
+        final List<Object[]> barList = new ArrayList<>();
+        assertNull(visitor.run(fooList, "foo", Object.class, 1, null));
+        assertNull(visitor.run(barList, "bar", Object.class, 1, null));
+        assertNull(visitor.run(fooList, "foo", Object.class, 2, null));
 
         mock.thenReturn(100);
-        assertEquals(100, visitor.run("foo", Object.class, 1, null));
-        assertNull(visitor.run("bar", Object.class, 1, null));
-        assertNull(visitor.run("foo", Object.class, 2, null));
+        assertEquals(100, visitor.run(fooList, "foo", Object.class, 1, null));
+        assertNull(visitor.run(barList, "bar", Object.class, 1, null));
+        assertNull(visitor.run(fooList, "foo", Object.class, 2, null));
     }
 
     @Test
@@ -55,19 +60,21 @@ public class MockTest {
         Matchers.eq(1);
         Matchers.any();
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        final Mock mock = new Mock(visitor,
-                new Visitor.Description("foo", 1, null));
-        assertNull(visitor.run("foo", Object.class, 1, null));
-        assertNull(visitor.run("bar", Object.class, 1, null));
-        assertNull(visitor.run("foo", Object.class, 2, null));
+        final Mock mock = new Mock(visitor, "foo", 1, null);
+
+        final List<Object[]> fooList = new ArrayList<>();
+        final List<Object[]> barList = new ArrayList<>();
+        assertNull(visitor.run(fooList, "foo", Object.class, 1, null));
+        assertNull(visitor.run(barList, "bar", Object.class, 1, null));
+        assertNull(visitor.run(fooList, "foo", Object.class, 2, null));
 
         mock.thenReturn(1).thenReturn(100);
-        assertEquals(1, visitor.run("foo", Object.class, 1, null));
+        assertEquals(1, visitor.run(fooList, "foo", Object.class, 1, null));
         for (int i = 0; i < 100; i++) {
-            assertEquals(100, visitor.run("foo", Object.class, 1, null));
+            assertEquals(100, visitor.run(fooList, "foo", Object.class, 1, null));
         }
-        assertNull(visitor.run("bar", Object.class, 1, null));
-        assertNull(visitor.run("foo", Object.class, 2, null));
+        assertNull(visitor.run(barList, "bar", Object.class, 1, null));
+        assertNull(visitor.run(fooList, "foo", Object.class, 2, null));
     }
 
     @Test
@@ -76,13 +83,14 @@ public class MockTest {
         Matchers.eq(1);
         Matchers.any();
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        final Mock mock = new Mock(visitor,
-                new Visitor.Description("foo", 1, null));
+        final Mock mock = new Mock(visitor, "foo", 1, null);
 
         mock.thenReturn(100);
-        assertEquals(100, visitor.run("foo", Object.class, 1, null));
-        assertNull(visitor.run("bar", Object.class, 1, null));
-        assertNull(visitor.run("foo", Object.class, 2, null));
+        final List<Object[]> fooList = new ArrayList<>();
+        final List<Object[]> barList = new ArrayList<>();
+        assertEquals(100, visitor.run(fooList, "foo", Object.class, 1, null));
+        assertNull(visitor.run(barList, "bar", Object.class, 1, null));
+        assertNull(visitor.run(fooList, "foo", Object.class, 2, null));
     }
 
     @Test
@@ -91,17 +99,18 @@ public class MockTest {
         Matchers.eq(1);
         Matchers.any();
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        final Mock mock = new Mock(visitor,
-                new Visitor.Description("foo", 1, null));
+        final Mock mock = new Mock(visitor, "foo", 1, null);
 
         mock.thenAnswer(i -> {
             assertEquals(1, i[0]);
             assertNull(i[1]);
             return 100;
         });
-        assertEquals(100, visitor.run("foo", Object.class, 1, null));
-        assertNull(visitor.run("bar", Object.class, 1, null));
-        assertNull(visitor.run("foo", Object.class, 2, null));
+        final List<Object[]> fooList = new ArrayList<>();
+        final List<Object[]> barList = new ArrayList<>();
+        assertEquals(100, visitor.run(fooList, "foo", Object.class, 1, null));
+        assertNull(visitor.run(barList, "bar", Object.class, 1, null));
+        assertNull(visitor.run(fooList, "foo", Object.class, 2, null));
     }
 
     @Test
@@ -110,13 +119,14 @@ public class MockTest {
         Matchers.eq(1);
         Matchers.any();
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        final Mock mock = new Mock(visitor,
-                new Visitor.Description("foo", 1, null));
+        final Mock mock = new Mock(visitor, "foo", 1, null);
 
         mock.thenThrow(new RuntimeException());
-        assertThrows(RuntimeException.class, () -> visitor.run("foo", Object.class, 1, null));
-        assertNull(visitor.run("bar", Object.class, 1, null));
-        assertNull(visitor.run("foo", Object.class, 2, null));
+        final List<Object[]> fooList = new ArrayList<>();
+        final List<Object[]> barList = new ArrayList<>();
+        assertThrows(RuntimeException.class, () -> visitor.run(fooList, "foo", Object.class, 1, null));
+        assertNull(visitor.run(barList, "bar", Object.class, 1, null));
+        assertNull(visitor.run(fooList, "foo", Object.class, 2, null));
     }
 
     @Test
@@ -125,12 +135,13 @@ public class MockTest {
         Matchers.eq(1);
         Matchers.any();
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        final Mock mock = new Mock(visitor,
-                new Visitor.Description("foo", 1, null));
+        final Mock mock = new Mock(visitor, "foo", 1, null);
 
         mock.thenThrow(IllegalAccessException.class);
-        assertThrows(IllegalAccessException.class, () -> visitor.run("foo", Object.class,1, null));
-        assertNull(visitor.run("bar", Object.class, 1, null));
-        assertNull(visitor.run("foo", Object.class, 2, null));
+        final List<Object[]> fooList = new ArrayList<>();
+        final List<Object[]> barList = new ArrayList<>();
+        assertThrows(IllegalAccessException.class, () -> visitor.run(fooList, "foo", Object.class,1, null));
+        assertNull(visitor.run(barList, "bar", Object.class, 1, null));
+        assertNull(visitor.run(fooList, "foo", Object.class, 2, null));
     }
 }

@@ -19,7 +19,6 @@ package work.teamteam.mock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import work.teamteam.mock.internal.Tracker;
 
 import java.util.Collections;
 import java.util.List;
@@ -44,6 +43,7 @@ public class MatchersTest {
         assertEquals(match.matches, predicates.get(0).test(match.obj));
     }
 
+    @SuppressWarnings({"unused", "boxing"})
     enum Match {
         // any
         ANY_NULL(Matchers::any, null, true),

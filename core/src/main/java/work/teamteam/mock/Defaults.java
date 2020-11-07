@@ -16,8 +16,6 @@
 
 package work.teamteam.mock;
 
-import org.objectweb.asm.Type;
-
 /**
  * Interface to support specifying custom returned defaults (per-class) for a mock.
  *
@@ -25,33 +23,41 @@ import org.objectweb.asm.Type;
  * we can change that to return e.g "response" for Strings
  */
 public interface Defaults {
-    <T> T get(final Class<T> clazz);
+    <T> Object get(final Class<T> clazz);
 
     /**
      * Default implementation of Defaults.
      */
     final class Impl implements Defaults {
         public static final Impl IMPL = new Impl();
-        private static final Object OBJECT_DEFAULT = null;
-        private static final Object[] PRIMITIVE_DEFAULTS = new Object[] {
-                null,
-                false,
-                (char) 0,
-                (byte) 0,
-                (short) 0,
-                0,
-                0.f,
-                0L,
-                0.0,
-        };
 
         private Impl() {}
 
         @SuppressWarnings("unchecked")
         @Override
-        public <T> T get(final Class<T> clazz) {
-            final int sort = Type.getType(clazz).getSort();
-            return (T) (PRIMITIVE_DEFAULTS.length > sort ? PRIMITIVE_DEFAULTS[sort] : OBJECT_DEFAULT);
+        public <T> Object get(final Class<T> clazz) {
+            if (clazz.isPrimitive()) {
+                if (clazz == Integer.TYPE) {
+                    return 0;
+                } else if (clazz == Void.TYPE) {
+                    return null;
+                } else if (clazz == Boolean.TYPE) {
+                    return false;
+                } else if (clazz == Byte.TYPE) {
+                    return (byte) 0;
+                } else if (clazz == Character.TYPE) {
+                    return (char) 0;
+                } else if (clazz == Short.TYPE) {
+                    return (short) 0;
+                } else if (clazz == Double.TYPE) {
+                    return 0.0;
+                } else if (clazz == Float.TYPE) {
+                    return 0.0f;
+                } else if (clazz == Long.TYPE) {
+                    return 0L;
+                }
+            }
+            return null;
         }
     }
 }

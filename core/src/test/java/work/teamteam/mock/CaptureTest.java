@@ -38,4 +38,22 @@ public class CaptureTest {
         assertEquals("bar", capture.tail());
         assertEquals(Arrays.asList("foo", "bar"), capture.captured());
     }
+
+    @Test
+    void testCaptureOrdered() {
+        final Foo foo = Mockery.mock(Foo.class);
+        final Capture<String> capture = Capture.of(String.class);
+        foo.doSomething("abc");
+        foo.doSomethingElse("welp");
+        foo.doSomething("abc");
+        foo.doSomething("def");
+
+        Mockery.verify(foo, 3).doSomething(Matchers.capture(capture));
+        assertEquals(Arrays.asList("abc", "abc", "def"), capture.captured());
+    }
+
+    public interface Foo {
+        String doSomething(final String str);
+        int doSomethingElse(final String str);
+    }
 }

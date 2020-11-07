@@ -19,17 +19,18 @@ package work.teamteam.mock;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objenesis.ObjenesisStd;
-import work.teamteam.mock.internal.Tracker;
 import work.teamteam.mock.internal.Verifier;
 import work.teamteam.mock.internal.Visitor;
 
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.LongPredicate;
@@ -54,7 +55,7 @@ public class Mockery {
      * call to get access to the method called (doesSomething) and the parameters (a, b).
      */
     public static void reset() {
-        Tracker.resetLast();
+        Visitor.resetLast();
         Matchers.getMatchers();
     }
 
@@ -126,7 +127,7 @@ public class Mockery {
      */
     @SuppressWarnings("unused")
     public static Mock when(final Object o) {
-        return Tracker.rollbackLast();
+        return Visitor.rollbackLast();
     }
 
     /**
@@ -199,9 +200,6 @@ public class Mockery {
             }
             final T instance = OBJENESIS_STD.newInstance((Class<T>) mock);
             ((Trackable) instance).setVisitor(new Visitor<>(impl, defaults));
-            //final Field visitor = mock.getDeclaredField("visitor");
-            //visitor.setAccessible(true);
-            //visitor.set(instance, new Visitor<>(impl, defaults));
             return instance;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -360,22 +358,51 @@ public class Mockery {
                 vis.visitMaxs(1, 1);
                 return null;
             }
+
+            final String key = name + descriptor;
+            final String var = key.replaceAll("[()/\\[]", "_").replace(';', '-');
+            visitor.visitField(Opcodes.ACC_PRIVATE, var, Type.getDescriptor(List.class), null, null);
+
             // create a shim that loads all arguments into an Object[] and passes them to
             // T Visitor::run(String name+descriptor, Class<T> returnType, Object[] args);
             final MethodVisitor vis = visitor.visitMethod(Opcodes.ACC_PUBLIC, name, descriptor, signature, exceptions);
             vis.visitCode();
 
+            // null check
+            vis.visitVarInsn(Opcodes.ALOAD, 0);
+            vis.visitInsn(Opcodes.DUP);
+            vis.visitInsn(Opcodes.MONITORENTER); // synchronized so it's safe to create a new list
+            vis.visitFieldInsn(Opcodes.GETFIELD, clazz, var, Type.getDescriptor(List.class));
+            final Label nonNull = new Label();
+            vis.visitJumpInsn(Opcodes.IFNONNULL, nonNull);
+
+            vis.visitVarInsn(Opcodes.ALOAD, 0); // this
+            vis.visitInsn(Opcodes.DUP);
+            // call visitors and return using the impl
+            vis.visitFieldInsn(Opcodes.GETFIELD, clazz, IMPL, IMPL_DESC);
+            vis.visitLdcInsn(key);
+            vis.visitMethodInsn(Opcodes.INVOKEVIRTUAL, IMPL_NAME, "init",
+                    "(Ljava/lang/String;)Ljava/util/List;", false);
+            vis.visitFieldInsn(Opcodes.PUTFIELD, clazz, var, Type.getDescriptor(List.class));
+
+            // else
+            vis.visitLabel(nonNull);
+            vis.visitVarInsn(Opcodes.ALOAD, 0); // this
+            vis.visitInsn(Opcodes.MONITOREXIT); // synchronized exit
+
             vis.visitVarInsn(Opcodes.ALOAD, 0); // this
             // call visitors and return using the impl
             vis.visitFieldInsn(Opcodes.GETFIELD, clazz, IMPL, IMPL_DESC);
-            vis.visitLdcInsn(name + descriptor);
+            vis.visitVarInsn(Opcodes.ALOAD, 0);
+            vis.visitFieldInsn(Opcodes.GETFIELD, clazz, var, Type.getDescriptor(List.class));
+            vis.visitLdcInsn(key);
 
             final Type ret = Type.getReturnType(descriptor);
             pushClass(vis, ret);
             final Type[] args = Type.getArgumentTypes(descriptor);
             writeArgsArray(vis, args);
             vis.visitMethodInsn(Opcodes.INVOKEVIRTUAL, IMPL_NAME, "run",
-                    "(Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Object;)Ljava/lang/Object;", false);
+                    "(Ljava/util/List;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Object;)Ljava/lang/Object;", false);
             cast(vis, ret);
             vis.visitInsn(ret.getOpcode(Opcodes.IRETURN));
             vis.visitMaxs(2, 1 + args.length);

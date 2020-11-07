@@ -230,7 +230,7 @@ public class Matchers {
      */
     public static <T> T capture(final Capture<T> capture) {
         REGISTER.add(capture::add);
-        return Defaults.Impl.IMPL.get(capture.getClazz());
+        return (T) Defaults.Impl.IMPL.get(capture.getClazz());
     }
 
     /**
@@ -252,7 +252,7 @@ public class Matchers {
      */
     public static boolean matchesBool(final BooleanPredicate condition) {
         REGISTER.add(i -> typeCheck(i, Boolean.class) && condition.test((boolean) i));
-        return Defaults.Impl.IMPL.get(boolean.class);
+        return (boolean) Defaults.Impl.IMPL.get(boolean.class);
     }
 
     /**
@@ -262,7 +262,7 @@ public class Matchers {
      */
     public static byte matchesByte(final BytePredicate condition) {
         REGISTER.add(i -> typeCheck(i, Byte.class) && condition.test((byte) i));
-        return Defaults.Impl.IMPL.get(byte.class);
+        return (byte) Defaults.Impl.IMPL.get(byte.class);
     }
 
     /**
@@ -272,7 +272,7 @@ public class Matchers {
      */
     public static char matchesChar(final CharPredicate condition) {
         REGISTER.add(i -> typeCheck(i, Character.class) && condition.test((char) i));
-        return Defaults.Impl.IMPL.get(char.class);
+        return (char) Defaults.Impl.IMPL.get(char.class);
     }
 
     /**
@@ -282,7 +282,7 @@ public class Matchers {
      */
     public static short matchesShort(final ShortPredicate condition) {
         REGISTER.add(i -> typeCheck(i, Short.class) && condition.test((short) i));
-        return Defaults.Impl.IMPL.get(short.class);
+        return (short) Defaults.Impl.IMPL.get(short.class);
     }
 
     /**
@@ -292,7 +292,7 @@ public class Matchers {
      */
     public static int matchesInt(final IntPredicate condition) {
         REGISTER.add(i -> typeCheck(i, Integer.class) && condition.test((int) i));
-        return Defaults.Impl.IMPL.get(int.class);
+        return (int) Defaults.Impl.IMPL.get(int.class);
     }
 
     /**
@@ -302,7 +302,7 @@ public class Matchers {
      */
     public static long matchesLong(final LongPredicate condition) {
         REGISTER.add(i -> typeCheck(i, Long.class) && condition.test((long) i));
-        return Defaults.Impl.IMPL.get(long.class);
+        return (long) Defaults.Impl.IMPL.get(long.class);
     }
 
     /**
@@ -312,7 +312,7 @@ public class Matchers {
      */
     public static float matchesFloat(final FloatPredicate condition) {
         REGISTER.add(i -> typeCheck(i, Float.class) && condition.test((float) i));
-        return Defaults.Impl.IMPL.get(float.class);
+        return (float) Defaults.Impl.IMPL.get(float.class);
     }
 
     /**
@@ -322,7 +322,7 @@ public class Matchers {
      */
     public static double matchesDouble(final DoublePredicate condition) {
         REGISTER.add(i -> typeCheck(i, Double.class) && condition.test((double) i));
-        return Defaults.Impl.IMPL.get(double.class);
+        return (double) Defaults.Impl.IMPL.get(double.class);
     }
 
     private static boolean typeCheck(final Object i, final Class<?> clazz) {

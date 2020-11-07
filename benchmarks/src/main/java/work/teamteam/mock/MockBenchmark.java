@@ -33,8 +33,8 @@ import org.openjdk.jmh.infra.Blackhole;
  MockBenchmark.benchmarkCreatingMockMockery  thrpt    5  31412764.490 ± 95361.233  ops/s
  MockBenchmark.benchmarkCreatingMockMockito  thrpt    5   1881940.543 ± 14734.198  ops/s
  */
-@Warmup(iterations = 10)
-@Measurement(iterations = 10)
+@Warmup(iterations = 5, time = 5)
+@Measurement(iterations = 5, time = 5)
 @Fork(1)
 public class MockBenchmark {
     @State(Scope.Benchmark)
@@ -66,6 +66,20 @@ public class MockBenchmark {
     @BenchmarkMode(Mode.Throughput)
     public void benchmarkCallMockedMethodMockito(final Mocks mocks, final Blackhole blackhole) {
         blackhole.consume(mocks.mockitoTarget.doSomething());
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    public void benchmarkCallMultipleMockedMethodMockery(final Mocks mocks, final Blackhole blackhole) {
+        blackhole.consume(mocks.mockeryTarget.doSomething());
+        blackhole.consume(mocks.mockeryTarget.doSomethingElse());
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    public void benchmarkCallMultipleMockedMethodMockito(final Mocks mocks, final Blackhole blackhole) {
+        blackhole.consume(mocks.mockitoTarget.doSomething());
+        blackhole.consume(mocks.mockitoTarget.doSomethingElse());
     }
 
     @Benchmark

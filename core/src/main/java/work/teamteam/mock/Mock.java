@@ -42,21 +42,22 @@ public class Mock {
     /**
      * INTERNAL
      * @param last visitor to associate these mocked return values with
-     * @param description method signature we are mocking
+     * @param key method signature we are mocking
+     * @param args args the method saw
      */
-    public Mock(final Visitor<?> last, final Visitor.Description description) {
+    public Mock(final Visitor<?> last, final String key, final Object... args) {
         this.state = new ArrayList<>();
         List<Predicate<Object>> matchers = Matchers.getMatchers();
         if (matchers.isEmpty()) {
-            matchers = new ArrayList<>(description.getArgs().length);
-            for (final Object arg: description.getArgs()) {
+            matchers = new ArrayList<>(args.length);
+            for (final Object arg: args) {
                 matchers.add(arg == null ? Objects::isNull : arg::equals);
             }
-        } else if (description.getArgs().length != matchers.size()) {
+        } else if (args.length != matchers.size()) {
             throw new RuntimeException("Not all arguments mocked, you must use eq for literals with Matchers");
         }
         last.registerCallback(a -> state.isEmpty() ? null : (state.size() == 1 ? state.get(0) : state.remove(0))
-                        .apply(a), description.getKey(), matchers);
+                        .apply(a), key, matchers);
     }
 
     private Mock add(final Visitor.Fn fn) {

@@ -19,12 +19,15 @@ package work.teamteam.mock.internal;
 import org.objectweb.asm.Type;
 import work.teamteam.mock.Defaults;
 import work.teamteam.mock.Matchers;
+import work.teamteam.mock.Mock;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 /**
@@ -32,20 +35,28 @@ import java.util.function.Predicate;
  * @param <T> class we're mocking/spying on
  */
 public class Visitor<T> {
-    private static final BiPredicate<String, Object[]> DEFAULT_VERIFIER = (k, a) -> true;
+    private static final TriPredicate<String, Object[], List<Object[]>> DEFAULT_VERIFIER = (k, a, l) -> true;
+    // global state to support verify/when syntax.
+    // as these methods don't directly receive the mock object we need some global state to record who was last touched
+    // e.g when(foo.something(bar).doReturn(...)); will be tracking foo because it was last called
+    private static volatile Visitor<?> lastCall = null;
     // @note: mutation is not thread safe, we assume all your setup is run before using the mock
     private List<Callback> callbacks;
-    private final Tracker tracker;
     private final T impl;
     private final Defaults defaults;
-    private BiPredicate<String, Object[]> verifier;
+    private TriPredicate<String, Object[], List<Object[]>> verifier;
+    private final Map<String, List<Object[]>> trackers;
+    private Map<String, CallHistory> callHistories;
+    private String lastKey;
 
     public Visitor(final T impl, final Defaults defaults) {
         this.callbacks = null;
-        this.tracker = new Tracker();
         this.impl = impl;
         this.defaults = Objects.requireNonNull(defaults);
         this.verifier = DEFAULT_VERIFIER;
+        this.trackers = new HashMap<>();
+        callHistories = null;
+        lastKey = null;
     }
 
     /**
@@ -54,19 +65,27 @@ public class Visitor<T> {
      * 2. Notifies the tracker
      * 3. returns any callbacks (thenReturn/thenAnswer) that match this method/arg combination
      * 4. returns the default return value for this methods return type
+     * @param target list to add data to - this should be a class member
      * @param key method name + description being called
      * @param clazz return type the method expects
      * @param args arguments passed to the method
      * @return an instance of the expected return type, either taken from registered callbacks or the default fallback
      * @throws Throwable throws if either the callback or fallbacks throw
      */
-    public Object run(final String key, final Class<?> clazz, final Object... args) throws Throwable {
+    public Object run(final List<Object[]> target,
+                      final String key,
+                      final Class<?> clazz,
+                      final Object... args) throws Throwable {
         // returns true if we've visited the tracker
-        if (!verifier.test(key, args)) {
+        if (!verifier.test(key, args, target)) {
             // note that this does not use the impl, since we don't want to risk modifying what we're spying on
             return defaults.get(clazz);
         }
-        tracker.visit(this, key, args);
+        lastCall = this;
+        synchronized (this) {
+            lastKey = key;
+            target.add(args);
+        }
         if (callbacks != null) {
             for (final Callback callback : callbacks) {
                 if (callback.matches(key, args)) {
@@ -75,6 +94,12 @@ public class Visitor<T> {
             }
         }
         return getFallback(key, clazz, args);
+    }
+
+    public List<Object[]> init(final String key) {
+        final List<Object[]> history = new ArrayList<>();
+        trackers.put(key, history);
+        return history;
     }
 
     /**
@@ -121,14 +146,34 @@ public class Visitor<T> {
 
     /**
      * Resets the current tracker & clears all callbacks
+     * Also resets the trackers call history. This should be used as often as possible
+     * as recorded history is unbounded and grows linearly with mock method calls
      */
     public void reset() {
-        tracker.reset();
+        for (final List<Object[]> descriptions: trackers.values()) {
+            descriptions.clear();
+        }
+        callHistories = null;
         callbacks = null;
     }
 
-    public Tracker getTracker() {
-        return tracker;
+    /**
+     * Resets the last called visitor. Used primarily for unit tests (see Mockery.reset())
+     */
+    public static void resetLast() {
+        synchronized (DEFAULT_VERIFIER) {
+            if (lastCall != null) {
+                lastCall.reset();
+                lastCall = null;
+            }
+        }
+    }
+
+    public static Mock rollbackLast() {
+        synchronized (DEFAULT_VERIFIER) {
+            final List<Object[]> last = lastCall.trackers.get(lastCall.lastKey);
+            return new Mock(lastCall, lastCall.lastKey, last.remove(last.size() - 1));
+        }
     }
 
     /**
@@ -136,11 +181,48 @@ public class Visitor<T> {
      * @param verifier verifier to use
      */
     public void setVerification(final Verifier verifier) {
-        this.verifier = (k, a) -> {
-            verifier.verify(tracker, k, Matchers.getMatchers(), a);
+        this.verifier = (k, a, l) -> {
+            verifier.verify(this, k, Matchers.getMatchers(), l, a);
             this.verifier = DEFAULT_VERIFIER;
             return false;
         };
+    }
+
+
+    /**
+     * Returns the number of times the key + args combination was called
+     * @param key method name + description
+     * @param args arguments used
+     * @return number of calls to this combination
+     */
+    public long get(final String key, final Object... args) {
+        return collect(key).get(args);
+    }
+
+    /**
+     * Converts the call history into a Map<MethodName+Description, CallHistory> to make lookup easier
+     * at the expense of absolute ordering
+     * @return reformatted call history
+     */
+    public CallHistory collect(final String key) {
+        synchronized (this) {
+            if (callHistories == null) {
+                callHistories = new HashMap<>();
+            }
+            CallHistory callHistory = callHistories.get(key);
+            if (callHistory == null) {
+                callHistory = new CallHistory();
+                callHistories.put(key, callHistory);
+            }
+            final List<Object[]> history = trackers.get(key);
+            if (history != null && callHistory.size != history.size()) {
+                callHistory.reset();
+                for (final Object[] args : history) {
+                    callHistory.update(args);
+                }
+            }
+            return callHistory;
+        }
     }
 
     private static final class Callback {
@@ -167,24 +249,46 @@ public class Visitor<T> {
         }
     }
 
-    /**
-     * Wrapper around a key (name + description) & args
-     */
-    public static final class Description {
-        private final String key;
-        private final Object[] args;
+    public static final class CallHistory {
+        private final Map<List<Object>, Long> perArgset = new HashMap<>();
+        private long size = 0;
 
-        public Description(final String key, final Object... args) {
-            this.key = key;
-            this.args = args;
+        public void reset() {
+            perArgset.clear();
+            size = 0;
         }
 
-        public String getKey() {
-            return key;
+        /**
+         * Adds or updates the call history with the given args
+         * @param args list of args for a specific method call
+         */
+        public void update(final Object... args) {
+            size++;
+            final List<Object> wrapper = Arrays.asList(args);
+            final Long l = perArgset.get(wrapper);
+            perArgset.put(wrapper, l == null ? 1L : l + 1);
         }
 
-        public Object[] getArgs() {
-            return args;
+        /**
+         * Returns the number of times the CallHistory has seen the specific set of arguments
+         * @param args list of args to check for
+         * @return number of times these have been seen
+         */
+        public long get(final Object... args) {
+            return perArgset.getOrDefault(Arrays.asList(args), 0L);
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final CallHistory that = (CallHistory) o;
+            return perArgset.equals(that.perArgset);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(perArgset);
         }
     }
 
@@ -193,5 +297,9 @@ public class Visitor<T> {
      */
     public interface Fn {
         Object apply(final Object[] args) throws Throwable;
+    }
+
+    public interface TriPredicate<A, B, C> {
+        boolean test(A a, B b, C c);
     }
 }

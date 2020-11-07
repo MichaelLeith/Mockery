@@ -19,90 +19,102 @@ package work.teamteam.mock.internal;
 import org.junit.jupiter.api.Test;
 import work.teamteam.mock.Defaults;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class VerifierTest {
     @Test
-    void testMatch() {
-        final Tracker tracker = new Tracker();
+    void testMatch() throws Throwable {
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        tracker.visit(visitor, "foo");
-        tracker.visit(visitor, "foo");
-        new Verifier(i -> i == 2).verify(tracker, "foo", Collections.emptyList());
+        final List<Object[]> list = visitor.init("foo");
+        visitor.run(list, "foo", Object.class);
+        visitor.run(list, "foo", Object.class);
+        new Verifier(i -> i == 2).verify(visitor, "foo", Collections.emptyList(), list);
     }
 
     @Test
-    void testMatchIsRepeatable() {
-        final Tracker tracker = new Tracker();
+    void testMatchIsRepeatable() throws Throwable {
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        tracker.visit(visitor, "foo");
-        tracker.visit(visitor, "foo");
+        final List<Object[]> list = visitor.init("foo");
+        visitor.run(list, "foo", Object.class);
+        visitor.run(list, "foo", Object.class);
         for (int j = 0; j < 10; j++) {
-            new Verifier(i -> i == 2).verify(tracker, "foo", Collections.emptyList());
+            new Verifier(i -> i == 2).verify(visitor, "foo", Collections.emptyList(), list);
         }
     }
 
     @Test
-    void testFail() {
-        final Tracker tracker = new Tracker();
+    void testFail() throws Throwable {
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        tracker.visit(visitor, "foo");
+        final List<Object[]> list = new ArrayList<>();
+        visitor.run(list, "foo", Object.class);
         assertThrows(RuntimeException.class, () ->
-                new Verifier(i -> i == 2).verify(tracker, "foo", Collections.emptyList()));
+                new Verifier(i -> i == 2).verify(visitor, "foo", Collections.emptyList(), list));
     }
 
     @Test
-    void testFailDifferentFnName() {
-        final Tracker tracker = new Tracker();
+    void testFailDifferentFnName() throws Throwable {
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        tracker.visit(visitor, "foo2");
-        new Verifier(i -> i == 1).verify(tracker, "foo2", Collections.emptyList());
+        final List<Object[]> list = visitor.init("foo2");
+        visitor.run(list, "foo2", Object.class);
+        new Verifier(i -> i == 1).verify(visitor, "foo2", Collections.emptyList(), list);
         assertThrows(RuntimeException.class, () ->
-                new Verifier(i -> i == 1).verify(tracker, "foo", Collections.emptyList()));
+                new Verifier(i -> i == 1).verify(visitor, "foo", Collections.emptyList(), new ArrayList<>()));
     }
 
     @Test
-    void testFailDifferentArgs() {
-        final Tracker tracker = new Tracker();
+    void testFailDifferentArgs() throws Throwable {
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        tracker.visit(visitor, "foo", 1);
-        new Verifier(i -> i == 1).verify(tracker, "foo", Collections.emptyList(), 1);
+        final List<Object[]> list = visitor.init("foo");
+        visitor.run(list, "foo", Object.class, 1);
+        new Verifier(i -> i == 1).verify(visitor, "foo", Collections.emptyList(), list, 1);
         assertThrows(RuntimeException.class, () ->
-                new Verifier(i -> i == 1).verify(tracker, "foo", Collections.emptyList()));
+                new Verifier(i -> i == 1).verify(visitor, "foo", Collections.emptyList(), new ArrayList<>()));
     }
 
     @Test
-    void testThrowsOnWrongNumArgs() {
-        final Tracker tracker = new Tracker();
+    void testThrowsOnWrongNumArgs() throws Throwable {
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        tracker.visit(visitor, "foo", 1);
-        assertThrows(RuntimeException.class, () -> new Verifier(i -> i == 1).verify(tracker, "foo", Collections.emptyList()));
-        assertThrows(RuntimeException.class, () -> new Verifier(i -> i == 1).verify(tracker, "foo", Collections.emptyList(), 1, 2));
+        final List<Object[]> list = new ArrayList<>();
+        visitor.run(list, "foo", Object.class, 1);
+        assertThrows(RuntimeException.class, () -> new Verifier(i -> i == 1).verify(visitor, "foo", Collections.emptyList(), new ArrayList<>()));
+        assertThrows(RuntimeException.class, () -> new Verifier(i -> i == 1).verify(visitor, "foo", Collections.emptyList(), new ArrayList<>(), 1, 2));
     }
 
     @Test
-    void testMatchCondition() {
-        final Tracker tracker = new Tracker();
+    void testMatchCondition() throws Throwable {
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        tracker.visit(visitor, "foo", 1);
-        tracker.visit(visitor, "foo", 1);
-        new Verifier(i -> i == 2).verify(tracker, "foo", Collections.singletonList(i -> (int) i == 1), 1);
+        final List<Object[]> list = new ArrayList<>();
+        visitor.run(list, "foo", Object.class, 1);
+        visitor.run(list, "foo", Object.class, 1);
+        new Verifier(i -> i == 2).verify(visitor, "foo", Collections.singletonList(i -> (int) i == 1), list, 1);
     }
 
     @Test
-    void testThrowsOnWrongNumPredicateArgs() {
-        final Tracker tracker = new Tracker();
+    void testDoesntMatchCondition() throws Throwable {
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
-        tracker.visit(visitor, "foo", 1);
+        final List<Object[]> list = new ArrayList<>();
+        visitor.run(list, "foo", Object.class, 1);
+        visitor.run(list, "foo", Object.class, 2);
+        visitor.run(list, "foo", Object.class, 1);
+        new Verifier(i -> i == 1).verify(visitor, "foo", Collections.singletonList(i -> (int) i == 2), list, 1);
+    }
+
+    @Test
+    void testThrowsOnWrongNumPredicateArgs() throws Throwable {
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
+        final List<Object[]> list = new ArrayList<>();
+        visitor.run(list, "foo", Object.class, 1);
         // too many
-        assertThrows(RuntimeException.class, () -> new Verifier(i -> i == 1).verify(tracker, "foo",
-                Arrays.asList(i -> (int) i == 1, Objects::nonNull), 1));
+        assertThrows(RuntimeException.class, () -> new Verifier(i -> i == 1).verify(visitor, "foo",
+                Arrays.asList(i -> (int) i == 1, Objects::nonNull), list, 1));
         // too few
-        assertThrows(RuntimeException.class, () -> new Verifier(i -> i == 1).verify(tracker, "foo",
-                Collections.singletonList(i -> (int) i == 1), 1, 2));
+        assertThrows(RuntimeException.class, () -> new Verifier(i -> i == 1).verify(visitor, "foo",
+                Collections.singletonList(i -> (int) i == 1), list, 1, 2));
     }
 }

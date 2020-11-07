@@ -33,25 +33,48 @@ public class Verifier {
 
     /**
      * Checks that the given key & matchers (or args) were seen by the tracker the specified number of times
-     * @param tracker tracker to get data from
+     * @param visitor visitor to get data from
      * @param key method name + description to test
      * @param matchers optional matchers to check, if empty args are used instead
      * @param args raw arguments to check for
      */
-    public void verify(final Tracker tracker,
+    public void verify(final Visitor<?> visitor,
                        final String key,
-                       List<Predicate<Object>> matchers,
+                       final List<Predicate<Object>> matchers,
+                       final List<Object[]> history,
                        final Object... args) {
-        final long calls;
+        long calls;
         if (matchers.isEmpty()) {
-            calls = tracker.get(key, args);
+            calls = visitor.get(key, args);
         } else if (matchers.size() != args.length) {
             throw new RuntimeException("Not all arguments mocked, you must use eq for literals with Matchers");
         } else {
-            calls = tracker.getMatches(key, matchers);
+            calls = 0;
+            /*
+             * finds the number of times the key was called with arguments that match their respective predicate,
+             * e.g args.get(0) is tested against arg 0, .get(1) against 1 and so forth.
+             * @param key method name + description
+             * @param args list of per-argument predicates to match
+             * @return the number of matches
+             */
+            for (final Object[] entry: history) {
+                if (entry.length == args.length && matches(matchers, entry)) {
+                    calls++;
+                }
+            }
+
         }
         if (!numCalls.test(calls)) {
             throw new RuntimeException("expected " + numCalls.toString() + ", but was called " + calls + " times");
         }
+    }
+
+    private static boolean matches(final List<Predicate<Object>> conditions, final Object[] args) {
+        for (int i = 0; i < args.length; i++) {
+            if (!conditions.get(i).test(args[i])) {
+                return false;
+            }
+        }
+        return true;
     }
 }

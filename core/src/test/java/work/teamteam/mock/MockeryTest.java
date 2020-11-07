@@ -51,6 +51,7 @@ public class MockeryTest {
         void arg(final String s, final int i);
     }
 
+    @SuppressWarnings("unused")
     public static class Foo {
         private final int i;
 
@@ -372,6 +373,7 @@ public class MockeryTest {
     }
 
     private static final class DefaultsOverride implements Defaults {
+        @SuppressWarnings("unchecked")
         @Override
         public <T> T get(final Class<T> clazz) {
             if (String.class.equals(clazz)) {
@@ -379,7 +381,7 @@ public class MockeryTest {
             } else if (int.class.equals(clazz)) {
                 return (T) Integer.valueOf(100);
             }
-            return Impl.IMPL.get(clazz);
+            return (T) Impl.IMPL.get(clazz);
         }
     }
 }
