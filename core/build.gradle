@@ -34,7 +34,6 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.7.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0")
     implementation(group: 'org.ow2.asm', name: 'asm', version: '9.0')
-    implementation(group: 'org.ow2.asm', name: 'asm-commons', version: '9.0')
     implementation(group: 'org.objenesis', name: 'objenesis', version: '3.1')
 }
 
@@ -66,6 +65,8 @@ test {
 jacocoTestReport {
     dependsOn test
 }
+
+jacocoTestCoverageVerification.dependsOn jacocoTestReport
 check.dependsOn jacocoTestCoverageVerification
 
 jacocoTestReport {

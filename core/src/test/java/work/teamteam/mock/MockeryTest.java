@@ -446,7 +446,7 @@ public class MockeryTest {
             return "foo2";
         }
 
-        private String get3() {
+        String get3() {
             return "foo";
         }
     }

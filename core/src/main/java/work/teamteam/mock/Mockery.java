@@ -17,13 +17,14 @@
 package work.teamteam.mock;
 
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objenesis.ObjenesisStd;
+import work.teamteam.mock.internal.MethodSummary;
+import work.teamteam.mock.internal.RootClassVisitor;
 import work.teamteam.mock.internal.Verifier;
 import work.teamteam.mock.internal.Visitor;
 
@@ -33,7 +34,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Set;
 import java.util.function.IntPredicate;
 
 /**
@@ -48,6 +49,20 @@ public class Mockery {
     // @todo: test equals/hashCode
     private static final Map<Class<?>, Class<?>> TYPE_CACHE = new HashMap<>();
     private static final ObjenesisStd OBJENESIS_STD = new ObjenesisStd();
+    private static final String IMPL_NAME = Type.getInternalName(Visitor.class);
+    private static final String IMPL_DESC = Type.getDescriptor(Visitor.class);
+    private static final String IMPL = "visitor";
+    private static final Type[] PRIMITIVES = new Type[]{
+            Type.getType(Void.class),
+            Type.getType(Boolean.class),
+            Type.getType(Character.class),
+            Type.getType(Byte.class),
+            Type.getType(Short.class),
+            Type.getType(Integer.class),
+            Type.getType(Float.class),
+            Type.getType(Long.class),
+            Type.getType(Double.class)
+    };
 
     private Mockery() {}
 
@@ -178,10 +193,177 @@ public class Mockery {
      * @throws Exception an exception if we fail to extend the class, e.g if it is final
      */
     private static <T> Class<?> inject(final Class<T> clazz) throws Exception {
-        final ClassWriter wr = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        final ClazzVisitor visitor = new ClazzVisitor(wr);
+        final RootClassVisitor visitor = new RootClassVisitor();
         new ClassReader(clazz.getName()).accept(visitor, ClassReader.EXPAND_FRAMES);
-        return loadClass(clazz, visitor.clazz.replace('/', '.'), wr.toByteArray());
+
+        final ClassWriter wr = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+        final String name = visitor.getName() + "Mock";
+        final String parent = writeClass(wr, clazz, name, visitor);
+
+        // implement trackable (i.e create a new field for the visitor and method getVisitor)
+        wr.visitField(Opcodes.ACC_PRIVATE, IMPL, IMPL_DESC, null, null);
+        writeGetVisitor(wr, name);
+        writeSetVisitor(wr, name);
+
+        final Set<MethodSummary> constructors = visitor.getConstructors();
+        for (final MethodSummary constructor: constructors) {
+            writeConstructor(wr, parent, constructor);
+        }
+
+        final Set<MethodSummary> methods = visitor.getMethods();
+        for (final MethodSummary method: methods) {
+            writeMethod(wr, name, method);
+        }
+        wr.visitEnd();
+        return loadClass(clazz, name.replace('/', '.'), wr.toByteArray());
+    }
+
+    /**
+     * Writes a new class header for clazz
+     * @param wr writer
+     * @param clazz class being extended
+     * @param name name of the class
+     * @param visitor visitor information about clazz
+     */
+    private static String writeClass(final ClassWriter wr,
+                                     final Class<?> clazz,
+                                     final String name,
+                                     final RootClassVisitor visitor) {
+        final String[] interfaces;
+        final String parent;
+        final String signature;
+        if (clazz.isInterface()) {
+            parent = "java/lang/Object";
+            signature = "L" + name;
+            interfaces = new String[]{visitor.getName(), Type.getInternalName(Trackable.class)};
+        } else {
+            parent = visitor.getName();
+            signature = visitor.getSignature();
+            interfaces = new String[]{Type.getInternalName(Trackable.class)};
+        }
+        wr.visit(visitor.getVersion(), Opcodes.ACC_PUBLIC, name, signature, parent, interfaces);
+        return parent;
+    }
+
+    /**
+     * Writes getVisitor(Sentinel);
+     * @param wr writer
+     * @param clazz class name
+     */
+    private static void writeGetVisitor(final ClassWriter wr, final String clazz) {
+        final MethodVisitor vis = wr.visitMethod(Opcodes.ACC_PUBLIC, "getVisitor",
+                "(" + Type.getDescriptor(Sentinel.class) + ")L" + IMPL_NAME + ";",
+                null,
+                null);
+        vis.visitCode();
+        vis.visitVarInsn(Opcodes.ALOAD, 0); // this
+        vis.visitFieldInsn(Opcodes.GETFIELD, clazz, IMPL, IMPL_DESC);
+        vis.visitInsn(Opcodes.ARETURN);
+        vis.visitMaxs(1, 1);
+    }
+
+    /**
+     * Writes setVisitor(Visitor);
+     * @param wr writer
+     * @param clazz class name
+     */
+    private static void writeSetVisitor(final ClassWriter wr, final String clazz) {
+        final MethodVisitor vis = wr.visitMethod(Opcodes.ACC_PUBLIC, "setVisitor",
+                "(" + Type.getDescriptor(Visitor.class) + ")V",
+                null,
+                null);
+        vis.visitCode();
+        vis.visitVarInsn(Opcodes.ALOAD, 0); // this
+        vis.visitVarInsn(Opcodes.ALOAD, 1);
+        vis.visitFieldInsn(Opcodes.PUTFIELD, clazz, IMPL, IMPL_DESC);
+        vis.visitInsn(Opcodes.RETURN);
+        vis.visitMaxs(1, 1);
+        wr.visitEnd();
+    }
+
+    /**
+     * Writes a stub constructor that just calls super
+     * @param wr writer
+     * @param parent parent class name
+     * @param summary method summary
+     */
+    private static void writeConstructor(final ClassWriter wr, final String parent, final MethodSummary summary) {
+        final MethodVisitor vis = wr.visitMethod(Opcodes.ACC_PUBLIC,
+                summary.getName(), summary.getDescriptor(), summary.getSignature(), summary.getExceptions());
+        vis.visitCode();
+        vis.visitVarInsn(Opcodes.ALOAD, 0); // this
+        final Type[] args = Type.getArgumentTypes(summary.getDescriptor());
+        for (int i = 0; i < args.length; i++) {
+            vis.visitVarInsn(args[i].getOpcode(Opcodes.ILOAD), i + 1);
+        }
+        vis.visitMethodInsn(Opcodes.INVOKESPECIAL, parent, "<init>", summary.getDescriptor(), false);
+        vis.visitInsn(Opcodes.RETURN);
+        vis.visitMaxs(1, 1);
+        wr.visitEnd();
+    }
+
+    /**
+     * Writes a stub method that proxies to the visitor
+     * @param wr writer
+     * @param clazz class name
+     * @param summary method summary
+     */
+    private static void writeMethod(final ClassWriter wr, final String clazz, final MethodSummary summary) {
+        final String descriptor = summary.getDescriptor();
+        final String key = summary.getName() + summary.getDescriptor();
+        final String var = key.replaceAll("[()/\\[]", "_").replace(';', '-');
+        wr.visitField(Opcodes.ACC_PRIVATE, var, Type.getDescriptor(List.class), null, null);
+
+        // create a shim that loads all arguments into an Object[] and passes them to
+        // T Visitor::run(String name+descriptor, Class<T> returnType, Object[] args);
+        final MethodVisitor vis = wr.visitMethod(Opcodes.ACC_PUBLIC, summary.getName(),
+                descriptor, summary.getSignature(), summary.getExceptions());
+        vis.visitCode();
+
+        // null check
+        vis.visitVarInsn(Opcodes.ALOAD, 0);
+        vis.visitInsn(Opcodes.DUP);
+        vis.visitInsn(Opcodes.MONITORENTER); // synchronized so it's safe to create a new list
+        vis.visitFieldInsn(Opcodes.GETFIELD, clazz, var, Type.getDescriptor(List.class));
+        final Label nonNull = new Label();
+        vis.visitJumpInsn(Opcodes.IFNONNULL, nonNull);
+
+        vis.visitVarInsn(Opcodes.ALOAD, 0); // this
+        vis.visitInsn(Opcodes.DUP);
+        // call visitors and return using the impl
+        vis.visitFieldInsn(Opcodes.GETFIELD, clazz, IMPL, IMPL_DESC);
+        vis.visitLdcInsn(key);
+        vis.visitMethodInsn(Opcodes.INVOKEVIRTUAL, IMPL_NAME, "init",
+                "(Ljava/lang/String;)Ljava/util/List;", false);
+        vis.visitFieldInsn(Opcodes.PUTFIELD, clazz, var, Type.getDescriptor(List.class));
+
+        // else
+        vis.visitLabel(nonNull);
+        vis.visitVarInsn(Opcodes.ALOAD, 0); // this
+        vis.visitInsn(Opcodes.DUP);
+        vis.visitInsn(Opcodes.MONITOREXIT); // synchronized exit
+
+        // call visitors and return using the impl
+        vis.visitFieldInsn(Opcodes.GETFIELD, clazz, IMPL, IMPL_DESC);
+        vis.visitVarInsn(Opcodes.ALOAD, 0);
+        vis.visitFieldInsn(Opcodes.GETFIELD, clazz, var, Type.getDescriptor(List.class));
+        vis.visitLdcInsn(key);
+
+        final Type ret = Type.getReturnType(descriptor);
+        pushClass(vis, ret);
+        final Type[] args = Type.getArgumentTypes(descriptor);
+        if (args.length == 0) {
+            vis.visitMethodInsn(Opcodes.INVOKEVIRTUAL, IMPL_NAME, "run",
+                    "(Ljava/util/List;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;", false);
+        } else {
+            writeArgsArray(vis, args);
+            vis.visitMethodInsn(Opcodes.INVOKEVIRTUAL, IMPL_NAME, "run",
+                    "(Ljava/util/List;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Object;)Ljava/lang/Object;", false);
+        }
+        cast(vis, ret);
+        vis.visitInsn(ret.getOpcode(Opcodes.IRETURN));
+        vis.visitMaxs(2, 1 + args.length);
+        wr.visitEnd();
     }
 
     /**
@@ -238,272 +420,101 @@ public class Mockery {
     }
 
     /**
-     * Generates the bytecode for our mock
+     * injects a Class<?> (including primitives) matching ret to the stack
+     *
+     * @param vis visitor to add bytecode to
+     * @param ret type we want to get a class for
      */
-    private static final class ClazzVisitor extends ClassVisitor {
-        private static final String IMPL_NAME = Type.getInternalName(Visitor.class);
-        private static final String IMPL_DESC = Type.getDescriptor(Visitor.class);
-        private static final String IMPL = "visitor";
-        private static final Type[] PRIMITIVES = new Type[]{
-                Type.getType(Void.class),
-                Type.getType(Boolean.class),
-                Type.getType(Character.class),
-                Type.getType(Byte.class),
-                Type.getType(Short.class),
-                Type.getType(Integer.class),
-                Type.getType(Float.class),
-                Type.getType(Long.class),
-                Type.getType(Double.class)
-        };
-
-        private String clazz;
-        private String parent;
-        private final ClassVisitor visitor;
-
-        public ClazzVisitor(final ClassVisitor visitor) {
-            super(Opcodes.ASM9, null);
-            this.visitor = Objects.requireNonNull(visitor);
+    private static void pushClass(final MethodVisitor vis, final Type ret) {
+        if (ret.getSort() < PRIMITIVES.length) {
+            //GETSTATIC java/lang/Void.TYPE : Ljava/lang/Class;
+            vis.visitFieldInsn(Opcodes.GETSTATIC, PRIMITIVES[ret.getSort()].getInternalName(), "TYPE", "Ljava/lang/Class;");
+        } else {
+            //LDC Ljava/lang/String;.class;
+            vis.visitLdcInsn(ret);
         }
+    }
 
-        /**
-         * Creates our new class. The new classes name will be the targets name + "Mock" and implement Trackable.
-         * If the target is an interface the new class will implement it.
-         * If the target is a class it will be extended (this means we only support non-final classes).
-         * Additionally, this method defines all the methods of Trackable for this class.
-         *
-         * TODO: additional test cases around extending & implementing interfaces (does this handle default methods?)
-         * @param version asm version
-         * @param access class access rules. These will be ignored - mocks will be public
-         * @param name the name of the class to extend
-         * @param signature the classes signature
-         * @param superName whatever class the target extends. This is ignored
-         * @param interfaces interfaces the class implements, this is ignored
-         */
-        @Override
-        public void visit(final int version,
-                          final int access,
-                          final String name,
-                          final String signature,
-                          final String superName,
-                          final String[] interfaces) {
-            if ((access & Opcodes.ACC_FINAL) != 0) {
-                throw new RuntimeException("final provided, expected a concrete class");
-            }
-            final boolean isInterface = (access & Opcodes.ACC_INTERFACE) != 0;
-            clazz = name + "Mock";
-            if (isInterface) {
-                parent = "java/lang/Object";
-                visitor.visit(version, Opcodes.ACC_PUBLIC, clazz, "L" + clazz, parent,
-                        new String[]{name, Type.getInternalName(Trackable.class)});
+    /**
+     * injects bytecode casting the previous Object on the stack to ret (handling primitive unboxing)
+     *
+     * @param vis visitor to add bytecode to
+     * @param ret type we want to cast to
+     */
+    private static void cast(final MethodVisitor vis, final Type ret) {
+        if (ret.getSort() != Type.VOID) {
+            if (ret.getSort() >= PRIMITIVES.length) {
+                vis.visitTypeInsn(Opcodes.CHECKCAST, ret.getInternalName());
             } else {
-                parent = name;
-                visitor.visit(version, Opcodes.ACC_PUBLIC, clazz, signature, name,
-                        new String[]{Type.getInternalName(Trackable.class)});
-            }
-
-            // implement trackable (i.e create a new field for the visitor and method getVisitor)
-            visitor.visitField(Opcodes.ACC_PRIVATE, IMPL, IMPL_DESC, null, null);
-            {
-                final MethodVisitor vis = visitor.visitMethod(Opcodes.ACC_PUBLIC, "getVisitor",
-                        "(" + Type.getDescriptor(Sentinel.class) + ")L" + IMPL_NAME + ";",
-                        null,
-                        null);
-                vis.visitCode();
-                vis.visitVarInsn(Opcodes.ALOAD, 0); // this
-                vis.visitFieldInsn(Opcodes.GETFIELD, clazz, IMPL, IMPL_DESC);
-                vis.visitInsn(Opcodes.ARETURN);
-                vis.visitMaxs(1, 1);
-            }
-            {
-                final MethodVisitor vis = visitor.visitMethod(Opcodes.ACC_PUBLIC, "setVisitor",
-                        "(" + Type.getDescriptor(Visitor.class) + ")V",
-                        null,
-                        null);
-                vis.visitCode();
-                vis.visitVarInsn(Opcodes.ALOAD, 0); // this
-                vis.visitVarInsn(Opcodes.ALOAD, 1);
-                vis.visitFieldInsn(Opcodes.PUTFIELD, clazz, IMPL, IMPL_DESC);
-                vis.visitInsn(Opcodes.RETURN);
-                vis.visitMaxs(1, 1);
-            }
-        }
-
-        /**
-         * Creates an equivalent method that delegates to our visitor.
-         * @param access Method access rules. These will be ignored - mocks will be public
-         * @param name name of the method. This will be inherited
-         * @param descriptor method descriptor. This will be inherited
-         * @param signature method signature. This will be inherited
-         * @param exceptions any exceptions that the method can throw. This will be inherited
-         * @return null
-         */
-        @Override
-        public MethodVisitor visitMethod(final int access,
-                                         final String name,
-                                         final String descriptor,
-                                         final String signature,
-                                         final String[] exceptions) {
-            // create a constructor. Currently we don't support mocking them, we simply create a shim that calls super
-            // we use Objenesis internally to bypass constructors, so this is safe, it's purely to ensure the bytecode
-            // is valid
-            if ("<init>".equals(name)) {
-                final MethodVisitor vis = visitor.visitMethod(Opcodes.ACC_PUBLIC,
-                        "<init>", descriptor, null, null);
-                vis.visitCode();
-                vis.visitVarInsn(Opcodes.ALOAD, 0); // this
-                final Type[] args = Type.getArgumentTypes(descriptor);
-                for (int i = 0; i < args.length; i++) {
-                    vis.visitVarInsn(args[i].getOpcode(Opcodes.ILOAD), i + 1);
-                }
-                vis.visitMethodInsn(Opcodes.INVOKESPECIAL, parent, "<init>", descriptor, false);
-                vis.visitInsn(Opcodes.RETURN);
-                vis.visitMaxs(1, 1);
-                return null;
-            } else if ((access & (Opcodes.ACC_FINAL)) != 0) {
-                // don't override final methods
-                return null;
-            }
-
-            final String key = name + descriptor;
-            final String var = key.replaceAll("[()/\\[]", "_").replace(';', '-');
-            visitor.visitField(Opcodes.ACC_PRIVATE, var, Type.getDescriptor(List.class), null, null);
-
-            // create a shim that loads all arguments into an Object[] and passes them to
-            // T Visitor::run(String name+descriptor, Class<T> returnType, Object[] args);
-            final MethodVisitor vis = visitor.visitMethod(Opcodes.ACC_PUBLIC, name, descriptor, signature, exceptions);
-            vis.visitCode();
-
-            // null check
-            vis.visitVarInsn(Opcodes.ALOAD, 0);
-            vis.visitInsn(Opcodes.DUP);
-            vis.visitInsn(Opcodes.MONITORENTER); // synchronized so it's safe to create a new list
-            vis.visitFieldInsn(Opcodes.GETFIELD, clazz, var, Type.getDescriptor(List.class));
-            final Label nonNull = new Label();
-            vis.visitJumpInsn(Opcodes.IFNONNULL, nonNull);
-
-            vis.visitVarInsn(Opcodes.ALOAD, 0); // this
-            vis.visitInsn(Opcodes.DUP);
-            // call visitors and return using the impl
-            vis.visitFieldInsn(Opcodes.GETFIELD, clazz, IMPL, IMPL_DESC);
-            vis.visitLdcInsn(key);
-            vis.visitMethodInsn(Opcodes.INVOKEVIRTUAL, IMPL_NAME, "init",
-                    "(Ljava/lang/String;)Ljava/util/List;", false);
-            vis.visitFieldInsn(Opcodes.PUTFIELD, clazz, var, Type.getDescriptor(List.class));
-
-            // else
-            vis.visitLabel(nonNull);
-            vis.visitVarInsn(Opcodes.ALOAD, 0); // this
-            vis.visitInsn(Opcodes.DUP);
-            vis.visitInsn(Opcodes.MONITOREXIT); // synchronized exit
-
-            // call visitors and return using the impl
-            vis.visitFieldInsn(Opcodes.GETFIELD, clazz, IMPL, IMPL_DESC);
-            vis.visitVarInsn(Opcodes.ALOAD, 0);
-            vis.visitFieldInsn(Opcodes.GETFIELD, clazz, var, Type.getDescriptor(List.class));
-            vis.visitLdcInsn(key);
-
-            final Type ret = Type.getReturnType(descriptor);
-            pushClass(vis, ret);
-            final Type[] args = Type.getArgumentTypes(descriptor);
-            if (args.length == 0) {
-                vis.visitMethodInsn(Opcodes.INVOKEVIRTUAL, IMPL_NAME, "run",
-                        "(Ljava/util/List;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;", false);
-            } else {
-                writeArgsArray(vis, args);
-                vis.visitMethodInsn(Opcodes.INVOKEVIRTUAL, IMPL_NAME, "run",
-                        "(Ljava/util/List;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Object;)Ljava/lang/Object;", false);
-            }
-            cast(vis, ret);
-            vis.visitInsn(ret.getOpcode(Opcodes.IRETURN));
-            vis.visitMaxs(2, 1 + args.length);
-            return null;
-        }
-
-        /**
-         * injects a Class<?> (including primitives) matching ret to the stack
-         * @param vis visitor to add bytecode to
-         * @param ret type we want to get a class for
-         */
-        private void pushClass(final MethodVisitor vis, final Type ret) {
-            if (ret.getSort() < PRIMITIVES.length) {
-                //GETSTATIC java/lang/Void.TYPE : Ljava/lang/Class;
-                vis.visitFieldInsn(Opcodes.GETSTATIC, PRIMITIVES[ret.getSort()].getInternalName(), "TYPE", "Ljava/lang/Class;");
-            } else {
-                //LDC Ljava/lang/String;.class;
-                vis.visitLdcInsn(ret);
-            }
-        }
-
-        /**
-         * injects bytecode casting the previous Object on the stack to ret (handling primitive unboxing)
-         * @param vis visitor to add bytecode to
-         * @param ret type we want to cast to
-         */
-        private void cast(final MethodVisitor vis, final Type ret) {
-            if (ret.getSort() != Type.VOID) {
-                if (ret.getSort() >= PRIMITIVES.length) {
-                    vis.visitTypeInsn(Opcodes.CHECKCAST, ret.getInternalName());
-                } else {
-                    // @todo: worth making this safer. Just now it's not fully type safe. See testThrowOnBadCallback
-                    // CHECKCAST java/lang/Integer
-                    // INVOKEVIRTUAL java/lang/Integer.intValue ()I
-                    final Type clazz = PRIMITIVES[ret.getSort()];
-                    vis.visitTypeInsn(Opcodes.CHECKCAST, clazz.getInternalName());
-                    vis.visitMethodInsn(Opcodes.INVOKEVIRTUAL, clazz.getInternalName(), ret.getClassName() + "Value",
-                            "()" + ret.getInternalName(), false);
-                }
-            }
-        }
-
-        /**
-         * Writes the given length to the stack
-         * @param vis visitor to add bytecode to
-         * @param len length to write to the stack
-         */
-        private void writeLength(final MethodVisitor vis, final int len) {
-            if (len <= 5) {
-                vis.visitInsn(Opcodes.ICONST_0 + len);
-            } else if (len < Byte.MAX_VALUE) {
-                vis.visitIntInsn(Opcodes.BIPUSH, len);
-            } else if (len < Short.MAX_VALUE) {
-                vis.visitIntInsn(Opcodes.SIPUSH, len);
-            } else {
-                vis.visitLdcInsn(len);
-            }
-        }
-
-        /**
-         * reads arguments from the stack and writes them back as an Object[] array, based on the type args
-         * @param vis visitor to add bytecode to
-         * @param args type of args to read and write to the stack
-         */
-        private void writeArgsArray(final MethodVisitor vis, final Type[] args) {
-            writeLength(vis, args.length);
-            vis.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
-            int j = 1;
-            for (int i = 0; i < args.length; i++) {
-                vis.visitInsn(Opcodes.DUP);
-                // write the array index
-                writeLength(vis, i);
-                final Type arg = args[i];
-                // load parameter to stack
-                vis.visitVarInsn(arg.getOpcode(Opcodes.ILOAD), j);
-                // handling variable width entries (e.g void/long/doubles)
-                j += arg.getSize();
-
-                // handle boxing
-                if (arg.getSort() == Type.VOID) {
-                    vis.visitInsn(Opcodes.ACONST_NULL);
-                } else if (arg.getSort() < PRIMITIVES.length) {
-                    final Type clazz = PRIMITIVES[arg.getSort()];
-                    vis.visitMethodInsn(Opcodes.INVOKESTATIC, clazz.getInternalName(), "valueOf",
-                            Type.getMethodDescriptor(clazz, arg), false);
-                }
-                vis.visitInsn(Opcodes.AASTORE);
+                // @todo: worth making this safer. Just now it's not fully type safe. See testThrowOnBadCallback
+                // CHECKCAST java/lang/Integer
+                // INVOKEVIRTUAL java/lang/Integer.intValue ()I
+                final Type clazz = PRIMITIVES[ret.getSort()];
+                vis.visitTypeInsn(Opcodes.CHECKCAST, clazz.getInternalName());
+                vis.visitMethodInsn(Opcodes.INVOKEVIRTUAL, clazz.getInternalName(), ret.getClassName() + "Value",
+                        "()" + ret.getInternalName(), false);
             }
         }
     }
 
+    /**
+     * Writes the given length to the stack
+     *
+     * @param vis visitor to add bytecode to
+     * @param len length to write to the stack
+     */
+    private static void writeLength(final MethodVisitor vis, final int len) {
+        if (len <= 5) {
+            vis.visitInsn(Opcodes.ICONST_0 + len);
+        } else if (len < Byte.MAX_VALUE) {
+            vis.visitIntInsn(Opcodes.BIPUSH, len);
+        } else if (len < Short.MAX_VALUE) {
+            vis.visitIntInsn(Opcodes.SIPUSH, len);
+        } else {
+            vis.visitLdcInsn(len);
+        }
+    }
+
+    /**
+     * reads arguments from the stack and writes them back as an Object[] array, based on the type args
+     *
+     * @param vis  visitor to add bytecode to
+     * @param args type of args to read and write to the stack
+     */
+    private static void writeArgsArray(final MethodVisitor vis, final Type[] args) {
+        writeLength(vis, args.length);
+        vis.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
+        int j = 1;
+        for (int i = 0; i < args.length; i++) {
+            vis.visitInsn(Opcodes.DUP);
+            // write the array index
+            writeLength(vis, i);
+            final Type arg = args[i];
+            // load parameter to stack
+            vis.visitVarInsn(arg.getOpcode(Opcodes.ILOAD), j);
+            // handling variable width entries (e.g void/long/doubles)
+            j += arg.getSize();
+
+            // handle boxing
+            if (arg.getSort() == Type.VOID) {
+                vis.visitInsn(Opcodes.ACONST_NULL);
+            } else if (arg.getSort() < PRIMITIVES.length) {
+                final Type clazz = PRIMITIVES[arg.getSort()];
+                vis.visitMethodInsn(Opcodes.INVOKESTATIC, clazz.getInternalName(), "valueOf",
+                        Type.getMethodDescriptor(clazz, arg), false);
+            }
+            vis.visitInsn(Opcodes.AASTORE);
+        }
+    }
+
+    /**
+     * Loads a new class called "name" from bytes
+     * @param parent parent class name extends/implements
+     * @param name name of the class
+     * @param b bytes describing the class
+     * @return a new class
+     * @throws Exception
+     */
     private static Class<?> loadClass(final Class<?> parent, final String name, final byte[] b) throws Exception {
         final ClassLoader loader = parent.getClassLoader();
         final Class<?> cls = Class.forName("java.lang.ClassLoader");
