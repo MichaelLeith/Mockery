@@ -129,8 +129,12 @@ public class Visitor<T> {
         if (impl != null) {
             for (final Method method: impl.getClass().getDeclaredMethods()) {
                 if (key.equals(method.getName() + Type.getMethodDescriptor(method))) {
-                    method.setAccessible(true);
-                    return method.invoke(impl, args);
+                    try {
+                        method.setAccessible(true);
+                        return method.invoke(impl, args);
+                    }  finally {
+                        method.setAccessible(false);
+                    }
                 }
             }
             throw new RuntimeException("Should not happen, missing method " + key);

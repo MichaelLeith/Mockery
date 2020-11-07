@@ -22,6 +22,8 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static work.teamteam.mock.Mockery.mock;
+import static work.teamteam.mock.Mockery.when;
 
 public class MockeryTest {
     @BeforeEach
@@ -103,18 +105,18 @@ public class MockeryTest {
     // @todo: can you spy an interface?
     @Test
     void testFinal() {
-        assertThrows(RuntimeException.class, () -> Mockery.mock(Final.class));
+        assertThrows(RuntimeException.class, () -> mock(Final.class));
     }
 
     @Test
     void testVerifyThrowsOnFail() {
         assertThrows(RuntimeException.class, () ->
-                Mockery.verify(Mockery.mock(Foo.class), 1).test("woo"));
+                Mockery.verify(mock(Foo.class), 1).test("woo"));
     }
 
     @Test
     void testVerify() {
-        final Foo impl = Mockery.mock(Foo.class);
+        final Foo impl = mock(Foo.class);
         impl.intAcc(1);
         impl.intAcc(1);
         impl.intAcc(2);
@@ -130,7 +132,7 @@ public class MockeryTest {
 
     @Test
     void testCapture() {
-        final Foo impl = Mockery.mock(Foo.class);
+        final Foo impl = mock(Foo.class);
         impl.intAcc(1);
         impl.intAcc(1);
         impl.intAcc(2);
@@ -168,7 +170,7 @@ public class MockeryTest {
 
     @Test
     void testWhenNonMock() {
-        assertThrows(RuntimeException.class, () -> Mockery.when(new Foo(1)));
+        assertThrows(RuntimeException.class, () -> when(new Foo(1)));
     }
 
     @Test
@@ -181,7 +183,7 @@ public class MockeryTest {
         final Foo foo = Mockery.spy(new Foo(1));
         assertEquals("woo", foo.test("woo"));
         Mockery.verify(foo, 1).test("woo");
-        Mockery.when(foo.test("woo")).thenReturn("lol");
+        when(foo.test("woo")).thenReturn("lol");
         assertEquals("lol", foo.test("woo"));
         Mockery.verify(foo, 2).test("woo");
     }
@@ -191,7 +193,7 @@ public class MockeryTest {
         final Foo foo = Mockery.spy(Foo.class, 1);
         assertEquals("woo", foo.test("woo"));
         Mockery.verify(foo, 1).test("woo");
-        Mockery.when(foo.test("woo")).thenReturn("lol");
+        when(foo.test("woo")).thenReturn("lol");
         assertEquals("lol", foo.test("woo"));
         Mockery.verify(foo, 2).test("woo");
     }
@@ -208,15 +210,15 @@ public class MockeryTest {
 
     @Test
     void testMockConcrete() {
-        final Foo impl = Mockery.mock(Foo.class);
+        final Foo impl = mock(Foo.class);
         assertNull(impl.test("welp"));
         Mockery.verify(impl, 1).test("welp");
         Mockery.verify(impl, 0).test("woo");
         Mockery.reset(impl);
         Mockery.verify(impl, 0).test("welp");
 
-        Mockery.when(impl.intAcc("lol", 1L, 0)).thenReturn("welp2");
-        Mockery.when(impl.intAcc("lol", 1L, 1)).thenReturn("welp3");
+        when(impl.intAcc("lol", 1L, 0)).thenReturn("welp2");
+        when(impl.intAcc("lol", 1L, 1)).thenReturn("welp3");
         // @todo: can we support this?
         assertNull(impl.intAcc("lol", 1L, 0));
         assertEquals("welp3", impl.intAcc("lol", 1L, 1));
@@ -226,9 +228,9 @@ public class MockeryTest {
 
     @Test
     void testArgumentMatchersWithMixedArgs() {
-        final Foo impl = Mockery.mock(Foo.class);
+        final Foo impl = mock(Foo.class);
         assertThrows(RuntimeException.class, () -> {
-            Mockery.when(impl.intAcc(Matchers.any(String.class),
+            when(impl.intAcc(Matchers.any(String.class),
                     1L,
                     Matchers.eq(0))).thenReturn("welp3");
         });
@@ -236,23 +238,23 @@ public class MockeryTest {
 
     @Test
     void testArgumentMatchers() {
-        final Foo impl = Mockery.mock(Foo.class);
-        Mockery.when(impl.test(Matchers.any())).thenReturn("welp");
+        final Foo impl = mock(Foo.class);
+        when(impl.test(Matchers.any())).thenReturn("welp");
         assertEquals("welp", impl.test("welp"));
         assertEquals("welp", impl.test("lol"));
         assertEquals("welp", impl.test(null));
 
-        Mockery.when(impl.intAcc(Matchers.anyInt())).thenReturn("welp");
+        when(impl.intAcc(Matchers.anyInt())).thenReturn("welp");
         assertEquals("welp", impl.intAcc(-1));
         assertEquals("welp", impl.intAcc(0));
         assertEquals("welp", impl.intAcc(1));
 
-        Mockery.when(impl.intAcc(Matchers.matchesInt(i -> i >= 0))).thenReturn("welp2");
+        when(impl.intAcc(Matchers.matchesInt(i -> i >= 0))).thenReturn("welp2");
         assertNull(impl.intAcc(-1));
         assertEquals("welp2", impl.intAcc(0));
         assertEquals("welp2", impl.intAcc(1));
 
-        Mockery.when(impl.intAcc(Matchers.any(String.class),
+        when(impl.intAcc(Matchers.any(String.class),
                 Matchers.matchesLong(i -> i >= 0),
                 Matchers.eq(0))).thenReturn("welp3");
         assertEquals("welp3", impl.intAcc("foo", 0, 0));
@@ -263,9 +265,9 @@ public class MockeryTest {
 
     @Test
     void testWhenUsesLast() {
-        final Foo impl = Mockery.mock(Foo.class);
-        Mockery.when(impl.test(Matchers.eq("foo"))).thenReturn("1");
-        Mockery.when(impl.test(Matchers.eq("bar"))).thenReturn("2");
+        final Foo impl = mock(Foo.class);
+        when(impl.test(Matchers.eq("foo"))).thenReturn("1");
+        when(impl.test(Matchers.eq("bar"))).thenReturn("2");
         assertNull(impl.test("foo"));
         assertEquals("2", impl.test("bar"));
         assertNull(impl.test(null));
@@ -273,45 +275,45 @@ public class MockeryTest {
 
     @Test
     void testCanUseWhenOnMultipleFunctions() {
-        final Foo impl = Mockery.mock(Foo.class);
-        Mockery.when(impl.intAcc(Matchers.anyInt())).thenReturn("welp");
-        Mockery.when(impl.test("bar")).thenReturn("2");
+        final Foo impl = mock(Foo.class);
+        when(impl.intAcc(Matchers.anyInt())).thenReturn("welp");
+        when(impl.test("bar")).thenReturn("2");
         assertEquals("welp", impl.intAcc(-1));
         assertEquals("2", impl.test("bar"));
     }
 
     @Test
     void testMocksCanBeUsedInWhenThenReturn() {
-        final Foo impl = Mockery.mock(Foo.class);
-        Mockery.when(impl.test(Matchers.any())).thenReturn("foo");
-        Mockery.when(impl.intAcc(Matchers.anyInt())).thenReturn(impl.test("well"));
+        final Foo impl = mock(Foo.class);
+        when(impl.test(Matchers.any())).thenReturn("foo");
+        when(impl.intAcc(Matchers.anyInt())).thenReturn(impl.test("well"));
         assertEquals("foo", impl.intAcc(-1));
     }
 
     @Test
     void testMocksCanBeUsedInWhenParameters() {
-        final Foo impl = Mockery.mock(Foo.class);
-        Mockery.when(impl.test(Matchers.any())).thenReturn("foo");
-        Mockery.when(impl.test(impl.test("bar"))).thenReturn("foo");
+        final Foo impl = mock(Foo.class);
+        when(impl.test(Matchers.any())).thenReturn("foo");
+        when(impl.test(impl.test("bar"))).thenReturn("foo");
         assertEquals("foo", impl.test("foo"));
         assertNull(impl.test("bar"));
     }
 
     @Test
     void testMockReplaces() {
-        final Foo impl = Mockery.mock(Foo.class);
-        Mockery.when(impl.test(Matchers.any())).thenReturn("foo");
-        Mockery.when(impl.test(Matchers.any())).thenReturn("bar");
+        final Foo impl = mock(Foo.class);
+        when(impl.test(Matchers.any())).thenReturn("foo");
+        when(impl.test(Matchers.any())).thenReturn("bar");
         assertEquals("bar", impl.test("lol"));
 
-        Mockery.when(impl.test("welp")).thenReturn("bar");
+        when(impl.test("welp")).thenReturn("bar");
         assertNull(impl.test("lol"));
         assertEquals("bar", impl.test("welp"));
     }
 
     @Test
     void testMockInterface() {
-        final TestInterface impl = Mockery.mock(TestInterface.class);
+        final TestInterface impl = mock(TestInterface.class);
         assertNull(impl.string());
         assertNull(impl.arr());
         impl.v();
@@ -337,29 +339,29 @@ public class MockeryTest {
         Mockery.reset(impl);
         Mockery.verify(impl, 0).arg("woo", 100);
 
-        Mockery.when(impl.i()).thenReturn(1).thenReturn(2);
+        when(impl.i()).thenReturn(1).thenReturn(2);
         Mockery.verify(impl, 0).i();
         assertEquals(1, impl.i());
         assertEquals(2, impl.i());
         assertEquals(2, impl.i());
 
         // @todo: is it worth adding implicit conversion?
-        Mockery.when(impl.s()).thenReturn((short) impl.i());
+        when(impl.s()).thenReturn((short) impl.i());
         assertEquals(2, impl.s());
         assertEquals(impl.s(), impl.i());
 
-        Mockery.when(impl.s()).thenAnswer(a -> (short) 3).thenReturn((short) 2);
+        when(impl.s()).thenAnswer(a -> (short) 3).thenReturn((short) 2);
         assertEquals(3, impl.s());
         assertEquals(2, impl.s());
 
-        Mockery.when(impl.i()).thenThrow(IllegalAccessException.class).thenReturn(100);
+        when(impl.i()).thenThrow(IllegalAccessException.class).thenReturn(100);
         assertThrows(IllegalAccessException.class, impl::i);
         assertEquals(100, impl.i());
     }
 
     @Test
     void testMockWithCustomDefault() {
-        final TestInterface impl = Mockery.mock(TestInterface.class, new DefaultsOverride());
+        final TestInterface impl = mock(TestInterface.class, new DefaultsOverride());
         assertEquals("foo", impl.string());
         assertEquals(100, impl.i());
         assertNull(impl.arr());
@@ -383,5 +385,160 @@ public class MockeryTest {
             }
             return (T) Impl.IMPL.get(clazz);
         }
+    }
+
+    public interface InterfaceWithDefaultMethod {
+        default String get() {
+            return "foo";
+        }
+
+        String get2();
+    }
+
+    public static class ImplementsInterfaceWithDefaultMethod implements InterfaceWithDefaultMethod {
+        @Override
+        public String get2() {
+            return "foo";
+        }
+    }
+
+    @Test
+    void testMockDefaultInterfaceMethod() {
+        final InterfaceWithDefaultMethod impl = mock(InterfaceWithDefaultMethod.class);
+        assertNull(impl.get());
+        when(impl.get()).thenReturn("bar");
+        assertEquals("bar", impl.get());
+
+        assertNull(impl.get2());
+        when(impl.get()).thenReturn("bar");
+        assertEquals("bar", impl.get());
+    }
+
+    @Test
+    void testMockDefaultImplementsInterfaceWithDefaultMethod() {
+        final ImplementsInterfaceWithDefaultMethod impl = mock(ImplementsInterfaceWithDefaultMethod.class);
+        assertNull(impl.get());
+        when(impl.get()).thenReturn("bar");
+        assertEquals("bar", impl.get());
+
+        assertNull(impl.get2());
+        when(impl.get()).thenReturn("bar");
+        assertEquals("bar", impl.get());
+    }
+
+    public static abstract class AbstractClass {
+        public String get() {
+            return "foo";
+        }
+
+        protected abstract String get2();
+    }
+
+    public static class ExtendingAbstractClass extends AbstractClass {
+        @Override
+        public String get2() {
+            return "foo";
+        }
+    }
+
+    public static class Extending extends ExtendingAbstractClass {
+        public String get() {
+            return "foo2";
+        }
+
+        private String get3() {
+            return "foo";
+        }
+    }
+
+    @Test
+    void testMockAbstractClass() {
+        final AbstractClass impl = mock(AbstractClass.class);
+        assertNull(impl.get());
+        when(impl.get()).thenReturn("bar");
+        assertEquals("bar", impl.get());
+
+        assertNull(impl.get2());
+        when(impl.get2()).thenReturn("bar");
+        assertEquals("bar", impl.get2());
+    }
+
+    @Test
+    void testMockExtendingAbstractClass() {
+        final ExtendingAbstractClass impl = mock(ExtendingAbstractClass.class);
+        assertNull(impl.get());
+        when(impl.get()).thenReturn("bar");
+        assertEquals("bar", impl.get());
+
+        assertNull(impl.get2());
+        when(impl.get2()).thenReturn("bar");
+        assertEquals("bar", impl.get2());
+    }
+
+    @Test
+    void testMockExtending() {
+        final Extending impl = mock(Extending.class);
+        assertNull(impl.get());
+        when(impl.get()).thenReturn("bar");
+        assertEquals("bar", impl.get());
+
+        assertNull(impl.get2());
+        when(impl.get2()).thenReturn("bar");
+        assertEquals("bar", impl.get2());
+
+        assertNull(impl.get3());
+        when(impl.get3()).thenReturn("bar");
+        assertEquals("bar", impl.get3());
+    }
+
+    public static class WithFinalMethod {
+        public final String get() {
+            return "foo";
+        }
+    }
+
+    @Test
+    void testMockFinalMethod() {
+        final WithFinalMethod impl = mock(WithFinalMethod.class);
+        assertEquals("foo", impl.get());
+        assertThrows(NullPointerException.class, () -> when(impl.get()).thenReturn("bar"));
+    }
+
+    public static class WithPrivateMethod {
+        private String get() {
+            return "foo";
+        }
+    }
+
+    @Test
+    void testMockPrivateMethod() {
+        final WithPrivateMethod impl = mock(WithPrivateMethod.class);
+        assertEquals("foo", impl.get());
+        assertThrows(NullPointerException.class, () -> when(impl.get()).thenReturn("bar"));
+    }
+
+    public static class WithStaticMethod {
+        public static String get() {
+            return "foo";
+        }
+    }
+
+    @Test
+    void testMockStaticMethod() {
+        final WithStaticMethod impl = mock(WithStaticMethod.class);
+        assertEquals("foo", impl.get());
+        assertThrows(NullPointerException.class, () -> when(impl.get()).thenReturn("bar"));
+    }
+
+    public static class WithNative {
+        public native String get();
+    }
+
+    @Test
+    void testMockNativeMethod() {
+        final WithNative impl = mock(WithNative.class);
+        assertNull(impl.get());
+        when(impl.get()).thenReturn("bar");
+        assertEquals("bar", impl.get());
     }
 }

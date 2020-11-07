@@ -8,8 +8,7 @@ This is a quick prototype to learn how Mocking frameworks (like Mockito) in Java
 * Explore Instrumentation
 * Support disabling tracking
 * Test + Optimize concurrency support
-* Support ordered Capture (per thread?)
-* Testing of default interface/base class methods
+* Support mocking default access (currently requires public/private or protected)
 
 ## Dependencies
 

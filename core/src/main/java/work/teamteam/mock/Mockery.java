@@ -28,6 +28,7 @@ import work.teamteam.mock.internal.Verifier;
 import work.teamteam.mock.internal.Visitor;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -44,6 +45,7 @@ import java.util.function.IntPredicate;
  */
 public class Mockery {
     // @todo: thread safety
+    // @todo: test equals/hashCode
     private static final Map<Class<?>, Class<?>> TYPE_CACHE = new HashMap<>();
     private static final ObjenesisStd OBJENESIS_STD = new ObjenesisStd();
 
@@ -179,7 +181,7 @@ public class Mockery {
         final ClassWriter wr = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
         final ClazzVisitor visitor = new ClazzVisitor(wr);
         new ClassReader(clazz.getName()).accept(visitor, ClassReader.EXPAND_FRAMES);
-        return ByteClassLoader.defineClass(visitor.clazz.replace('/', '.'), wr.toByteArray());
+        return loadClass(clazz, visitor.clazz.replace('/', '.'), wr.toByteArray());
     }
 
     /**
@@ -357,6 +359,9 @@ public class Mockery {
                 vis.visitInsn(Opcodes.RETURN);
                 vis.visitMaxs(1, 1);
                 return null;
+            } else if ((access & (Opcodes.ACC_FINAL)) != 0) {
+                // don't override final methods
+                return null;
             }
 
             final String key = name + descriptor;
@@ -499,12 +504,17 @@ public class Mockery {
         }
     }
 
-    /**
-     * Extends a ClassLoader so we can load classes from a byte array
-     */
-    private static final class ByteClassLoader extends ClassLoader {
-        static Class<?> defineClass(final String name, final byte[] bytes) {
-            return new ByteClassLoader().defineClass(name, bytes, 0, bytes.length);
+    private static Class<?> loadClass(final Class<?> parent, final String name, final byte[] b) throws Exception {
+        final ClassLoader loader = parent.getClassLoader();
+        final Class<?> cls = Class.forName("java.lang.ClassLoader");
+        final Method method = cls.getDeclaredMethod("defineClass", String.class, byte[].class, int.class, int.class);
+        final Class<?> clazz;
+        try {
+            method.setAccessible(true);
+            clazz = (Class<?>) method.invoke(loader, name, b, 0, b.length);
+        } finally {
+            method.setAccessible(false);
         }
+        return clazz;
     }
 }

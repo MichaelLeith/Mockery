@@ -92,6 +92,8 @@ public final class MockeryInject {
                 field.set(o, match.newInstance(args));
             } catch (InstantiationException|InvocationTargetException e) {
                 throw new RuntimeException(e);
+            } finally {
+                match.setAccessible(false);
             }
         }
     }
@@ -177,6 +179,8 @@ public final class MockeryInject {
             field.set(o, creator.apply(field.getType()));
         } catch (final Exception e) {
             throw new RuntimeException(e);
+        } finally {
+            field.setAccessible(false);
         }
     }
 
