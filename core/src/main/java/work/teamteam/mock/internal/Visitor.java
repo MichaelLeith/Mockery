@@ -35,6 +35,7 @@ import java.util.function.Predicate;
  * @param <T> class we're mocking/spying on
  */
 public class Visitor<T> {
+    private static final Object[] EMPTY = new Object[]{};
     private static final TriPredicate<String, Object[], List<Object[]>> DEFAULT_VERIFIER = (k, a, l) -> true;
     // global state to support verify/when syntax.
     // as these methods don't directly receive the mock object we need some global state to record who was last touched
@@ -87,13 +88,27 @@ public class Visitor<T> {
             target.add(args);
         }
         if (callbacks != null) {
-            for (final Callback callback : callbacks) {
+            for (Callback callback : callbacks) {
                 if (callback.matches(key, args)) {
                     return callback.fn.apply(args);
                 }
             }
         }
         return getFallback(key, clazz, args);
+    }
+
+    /**
+     * Special case of run for methods with no args
+     * @param target
+     * @param key
+     * @param clazz
+     * @return
+     * @throws Throwable
+     */
+    public Object run(final List<Object[]> target,
+                      final String key,
+                      final Class<?> clazz) throws Throwable {
+        return run(target, key, clazz, EMPTY);
     }
 
     public List<Object[]> init(final String key) {
@@ -153,8 +168,12 @@ public class Visitor<T> {
         for (final List<Object[]> descriptions: trackers.values()) {
             descriptions.clear();
         }
-        callHistories = null;
-        callbacks = null;
+        if (callHistories != null) {
+            callHistories.clear();
+        }
+        if (callbacks != null) {
+            callbacks.clear();
+        }
     }
 
     /**
@@ -178,7 +197,7 @@ public class Visitor<T> {
 
     /**
      * Sets the verifier to use for the next method call
-     * @param verifier verifier to use
+     * @param verifier verifier to uset
      */
     public void setVerification(final Verifier verifier) {
         this.verifier = (k, a, l) -> {

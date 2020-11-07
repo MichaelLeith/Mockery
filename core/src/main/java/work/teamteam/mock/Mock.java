@@ -35,9 +35,10 @@ import java.util.function.Predicate;
  * e.g when(foo.doSomething(anyInt())).thenReturn(100).thenThrow(RuntimeException.class)
  * will return 100, then all future calls will throw a RuntimeException
  */
-public class Mock<T> {
+public class Mock<T> implements Visitor.Fn {
     // list of "thenX" methods that have been registered to this mock
     private final List<Visitor.Fn> state;
+    private int index = 0;
 
     /**
      * INTERNAL
@@ -46,7 +47,7 @@ public class Mock<T> {
      * @param args args the method saw
      */
     public Mock(final Visitor<?> last, final String key, final Object... args) {
-        this.state = new ArrayList<>();
+        this.state = new ArrayList<>(4);
         List<Predicate<Object>> matchers = Matchers.getMatchers();
         if (matchers.isEmpty()) {
             matchers = new ArrayList<>(args.length);
@@ -56,8 +57,18 @@ public class Mock<T> {
         } else if (args.length != matchers.size()) {
             throw new RuntimeException("Not all arguments mocked, you must use eq for literals with Matchers");
         }
-        last.registerCallback(a -> state.isEmpty() ? null : (state.size() == 1 ? state.get(0) : state.remove(0))
-                        .apply(a), key, matchers);
+        last.registerCallback(this, key, matchers);
+    }
+
+    @Override
+    public Object apply(final Object[] args) throws Throwable {
+        if (state.isEmpty()) {
+            return null;
+        }
+        if (index < state.size()) {
+            index++;
+        }
+        return state.get(index - 1).apply(args);
     }
 
     private Mock<T> add(final Visitor.Fn fn) {
@@ -71,7 +82,7 @@ public class Mock<T> {
      * @return this mock for chaining
      */
     public Mock<T> thenReturn(final T o) {
-        return add(a -> o);
+        return add(new Getter<>(o));
     }
 
     /**
@@ -99,5 +110,18 @@ public class Mock<T> {
      */
     public <S extends Throwable> Mock<T> thenThrow(final S e) {
         return add(a -> { throw e; });
+    }
+
+    private static final class Getter<T> implements Visitor.Fn {
+        private final T t;
+
+        public Getter(final T t) {
+            this.t = t;
+        }
+
+        @Override
+        public T apply(final Object[] objects) {
+            return t;
+        }
     }
 }

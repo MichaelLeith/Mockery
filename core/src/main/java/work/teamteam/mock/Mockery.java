@@ -388,9 +388,9 @@ public class Mockery {
             // else
             vis.visitLabel(nonNull);
             vis.visitVarInsn(Opcodes.ALOAD, 0); // this
+            vis.visitInsn(Opcodes.DUP);
             vis.visitInsn(Opcodes.MONITOREXIT); // synchronized exit
 
-            vis.visitVarInsn(Opcodes.ALOAD, 0); // this
             // call visitors and return using the impl
             vis.visitFieldInsn(Opcodes.GETFIELD, clazz, IMPL, IMPL_DESC);
             vis.visitVarInsn(Opcodes.ALOAD, 0);
@@ -400,9 +400,14 @@ public class Mockery {
             final Type ret = Type.getReturnType(descriptor);
             pushClass(vis, ret);
             final Type[] args = Type.getArgumentTypes(descriptor);
-            writeArgsArray(vis, args);
-            vis.visitMethodInsn(Opcodes.INVOKEVIRTUAL, IMPL_NAME, "run",
-                    "(Ljava/util/List;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Object;)Ljava/lang/Object;", false);
+            if (args.length == 0) {
+                vis.visitMethodInsn(Opcodes.INVOKEVIRTUAL, IMPL_NAME, "run",
+                        "(Ljava/util/List;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/Object;", false);
+            } else {
+                writeArgsArray(vis, args);
+                vis.visitMethodInsn(Opcodes.INVOKEVIRTUAL, IMPL_NAME, "run",
+                        "(Ljava/util/List;Ljava/lang/String;Ljava/lang/Class;[Ljava/lang/Object;)Ljava/lang/Object;", false);
+            }
             cast(vis, ret);
             vis.visitInsn(ret.getOpcode(Opcodes.IRETURN));
             vis.visitMaxs(2, 1 + args.length);
@@ -483,7 +488,7 @@ public class Mockery {
 
                 // handle boxing
                 if (arg.getSort() == Type.VOID) {
-                    vis.visitInsn(Opcodes.RETURN);
+                    vis.visitInsn(Opcodes.ACONST_NULL);
                 } else if (arg.getSort() < PRIMITIVES.length) {
                     final Type clazz = PRIMITIVES[arg.getSort()];
                     vis.visitMethodInsn(Opcodes.INVOKESTATIC, clazz.getInternalName(), "valueOf",

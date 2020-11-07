@@ -17,6 +17,7 @@
 package work.teamteam.mock;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.DoublePredicate;
@@ -334,9 +335,12 @@ public class Matchers {
      * @return list of matcher predicates used since the last global reset
      */
     public static List<Predicate<Object>> getMatchers() {
-        final List<Predicate<Object>> cpy = new ArrayList<>(REGISTER);
-        REGISTER.clear();
-        return cpy;
+        if (!REGISTER.isEmpty()) {
+            final List<Predicate<Object>> cpy = new ArrayList<>(REGISTER);
+            REGISTER.clear();
+            return cpy;
+        }
+        return Collections.emptyList();
     }
 
     public interface FloatPredicate {
