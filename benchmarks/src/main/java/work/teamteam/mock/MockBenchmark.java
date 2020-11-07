@@ -28,11 +28,6 @@ import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
 
-/**
- Benchmark                                    Mode  Cnt         Score       Error  Units
- MockBenchmark.benchmarkCreatingMockMockery  thrpt    5  31412764.490 ± 95361.233  ops/s
- MockBenchmark.benchmarkCreatingMockMockito  thrpt    5   1881940.543 ± 14734.198  ops/s
- */
 @Warmup(iterations = 5, time = 5)
 @Measurement(iterations = 5, time = 5)
 @Fork(1)
@@ -42,7 +37,7 @@ public class MockBenchmark {
         Target mockeryTarget;
         Target mockitoTarget;
 
-        @Setup(Level.Invocation)
+        @Setup(Level.Trial)
         public void setUp() {
             mockeryTarget = Mockery.mock(Target.class);
             mockitoTarget = Mockito.mock(Target.class);
@@ -54,6 +49,34 @@ public class MockBenchmark {
             Mockery.reset(mockeryTarget);
             Mockito.reset(mockitoTarget);
         }
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    public void benchmarkVerifyMockery(final Mocks mocks, final Blackhole blackhole) {
+        blackhole.consume(mocks.mockeryTarget.doSomething());
+        Mockery.verify(mocks.mockeryTarget, Times.ge(1)).doSomething();
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    public void benchmarkVerifyMockito(final Mocks mocks, final Blackhole blackhole) {
+        blackhole.consume(mocks.mockitoTarget.doSomething());
+        Mockito.verify(mocks.mockitoTarget, Mockito.atLeastOnce()).doSomething();
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    public void benchmarkCallWhenMockery(final Mocks mocks, final Blackhole blackhole) {
+        Mockery.when(mocks.mockeryTarget.doSomething()).thenReturn("foo");
+        blackhole.consume(mocks.mockeryTarget.doSomething());
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    public void benchmarkCallWhenMockito(final Mocks mocks, final Blackhole blackhole) {
+        Mockito.when(mocks.mockitoTarget.doSomething()).thenReturn("foo");
+        blackhole.consume(mocks.mockitoTarget.doSomething());
     }
 
     @Benchmark

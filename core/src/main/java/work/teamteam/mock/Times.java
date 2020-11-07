@@ -17,7 +17,7 @@
 package work.teamteam.mock;
 
 import java.util.Objects;
-import java.util.function.LongPredicate;
+import java.util.function.IntPredicate;
 
 /**
  * Methods to use when verifying
@@ -30,7 +30,7 @@ public final class Times {
      * @param count num times
      * @return predicate
      */
-    public static LongPredicate eq(final long count) {
+    public static IntPredicate eq(final int count) {
         return new Condition(i -> i == count, String.valueOf(count));
     }
 
@@ -39,7 +39,7 @@ public final class Times {
      * @param count num times
      * @return predicate
      */
-    public static LongPredicate gt(final long count) {
+    public static IntPredicate gt(final int count) {
         return new Condition(i -> i > count, "> " + count);
     }
 
@@ -48,7 +48,7 @@ public final class Times {
      * @param count num times
      * @return predicate
      */
-    public static LongPredicate ge(final long count) {
+    public static IntPredicate ge(final int count) {
         return new Condition(i -> i >= count, ">= " + count);
     }
 
@@ -57,7 +57,7 @@ public final class Times {
      * @param count num times
      * @return predicate
      */
-    public static LongPredicate lt(final long count) {
+    public static IntPredicate lt(final int count) {
         return new Condition(i -> i < count, "< " + count);
     }
 
@@ -66,24 +66,24 @@ public final class Times {
      * @param count num times
      * @return predicate
      */
-    public static LongPredicate le(final long count) {
+    public static IntPredicate le(final int count) {
         return new Condition(i -> i <= count, "<= " + count);
     }
 
     /**
-     * Utility class to provide a LongPredicate with a human readable toString
+     * Utility class to provide a IntPredicate with a human readable toString
      */
-    public static final class Condition implements LongPredicate {
-        final LongPredicate condition;
+    public static final class Condition implements IntPredicate {
+        final IntPredicate condition;
         final String toString;
 
-        public Condition(final LongPredicate condition, final String toString) {
+        public Condition(final IntPredicate condition, final String toString) {
             this.condition = Objects.requireNonNull(condition);
             this.toString = Objects.requireNonNull(toString);
         }
 
         @Override
-        public boolean test(final long value) {
+        public boolean test(final int value) {
             return condition.test(value);
         }
 

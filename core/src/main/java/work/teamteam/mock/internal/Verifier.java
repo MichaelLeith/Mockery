@@ -18,6 +18,7 @@ package work.teamteam.mock.internal;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.IntPredicate;
 import java.util.function.LongPredicate;
 import java.util.function.Predicate;
 
@@ -25,9 +26,9 @@ import java.util.function.Predicate;
  * Used to verify how many times a method was called
  */
 public class Verifier {
-    private final LongPredicate numCalls;
+    private final IntPredicate numCalls;
 
-    public Verifier(final LongPredicate numCalls) {
+    public Verifier(final IntPredicate numCalls) {
         this.numCalls = Objects.requireNonNull(numCalls);
     }
 
@@ -43,7 +44,7 @@ public class Verifier {
                        final List<Predicate<Object>> matchers,
                        final List<Object[]> history,
                        final Object... args) {
-        long calls;
+        int calls;
         if (matchers.isEmpty()) {
             calls = visitor.get(key, args);
         } else if (matchers.size() != args.length) {

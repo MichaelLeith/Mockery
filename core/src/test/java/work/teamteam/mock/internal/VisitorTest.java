@@ -120,6 +120,10 @@ public class VisitorTest {
         visitor.setVerification(new Verifier(Times.eq(1)));
         assertEquals(0, visitor.run(calls, "withArgs()I", int.class));
         assertEquals(2, visitor.run(calls, "withArgs()I", int.class));
+
+        visitor.setVerification(new Verifier(Times.eq(2)));
+        assertEquals(0, visitor.run(calls, "withArgs()I", int.class));
+        assertEquals(2, visitor.run(calls, "withArgs()I", int.class));
     }
 
     public static final class Impl {

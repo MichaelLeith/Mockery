@@ -33,7 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.LongPredicate;
+import java.util.function.IntPredicate;
 
 /**
  * Mockery is a library for mocking classes when testing. Mocking can be used:
@@ -139,7 +139,7 @@ public class Mockery {
      * @param <T> generic type of o
      * @return o
      */
-    public static <T> T verify(final T o, final long numCalls) {
+    public static <T> T verify(final T o, final int numCalls) {
         getVisitor(o).setVerification(new Verifier(Times.eq(numCalls)));
         return o;
     }
@@ -155,7 +155,7 @@ public class Mockery {
      * @param <T> generic type of o
      * @return o
      */
-    public static <T> T verify(final T o, final LongPredicate predicate) {
+    public static <T> T verify(final T o, final IntPredicate predicate) {
         getVisitor(o).setVerification(new Verifier(predicate));
         return o;
     }

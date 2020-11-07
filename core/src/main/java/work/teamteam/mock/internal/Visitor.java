@@ -195,7 +195,7 @@ public class Visitor<T> {
      * @param args arguments used
      * @return number of calls to this combination
      */
-    public long get(final String key, final Object... args) {
+    public int get(final String key, final Object... args) {
         return collect(key).get(args);
     }
 
@@ -216,9 +216,8 @@ public class Visitor<T> {
             }
             final List<Object[]> history = trackers.get(key);
             if (history != null && callHistory.size != history.size()) {
-                callHistory.reset();
-                for (final Object[] args : history) {
-                    callHistory.update(args);
+                for (int i = callHistory.size; i < history.size(); i++) {
+                    callHistory.update(history.get(i));
                 }
             }
             return callHistory;
@@ -250,13 +249,8 @@ public class Visitor<T> {
     }
 
     public static final class CallHistory {
-        private final Map<List<Object>, Long> perArgset = new HashMap<>();
-        private long size = 0;
-
-        public void reset() {
-            perArgset.clear();
-            size = 0;
-        }
+        private final Map<List<Object>, Integer> perArgset = new HashMap<>();
+        private int size = 0;
 
         /**
          * Adds or updates the call history with the given args
@@ -265,8 +259,7 @@ public class Visitor<T> {
         public void update(final Object... args) {
             size++;
             final List<Object> wrapper = Arrays.asList(args);
-            final Long l = perArgset.get(wrapper);
-            perArgset.put(wrapper, l == null ? 1L : l + 1);
+            perArgset.put(wrapper, perArgset.getOrDefault(wrapper, 0) + 1);
         }
 
         /**
@@ -274,8 +267,8 @@ public class Visitor<T> {
          * @param args list of args to check for
          * @return number of times these have been seen
          */
-        public long get(final Object... args) {
-            return perArgset.getOrDefault(Arrays.asList(args), 0L);
+        public int get(final Object... args) {
+            return perArgset.getOrDefault(Arrays.asList(args), 0);
         }
 
         @Override
