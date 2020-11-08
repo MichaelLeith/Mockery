@@ -1,17 +1,11 @@
 # Mockery
 
-This is a quick prototype to learn how Mocking frameworks (like Mockito) in Java (14) work.
-
-## TODO
-
-* Cleanup Spy/Matcher logic
-* Explore Instrumentation
-* Test + Optimize concurrency support
-* Unwrap recursion when reading asm?
+This is a quick library to learn how Mocking frameworks (like Mockito) in Java (currently 14, but likely works for java8+) work.
 
 ## Dependencies
 
 Objenesis - for initializing mocks without calling constructors
+
 asm - for generating mocks
 
 ## Quick Example
@@ -79,3 +73,10 @@ Object/array - null
 * Can't mock final classes/constructors (this requires Instrumentation)
 * Arguments are only captured in-order per-method
 * ...
+
+## TODO
+
+* Cleanup Spy/Matcher logic
+* Explore Instrumentation
+* Test + Optimize concurrency support
+* Unwrap recursion when reading asm?
