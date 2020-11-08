@@ -74,6 +74,37 @@ Object/array - null
 * Arguments are only captured in-order per-method
 * ...
 
+## Benchmarks
+
+Benchmarks are all run on An Intel i74870HQ (a mid 2014 Macbook With OSX 10.14.5), with Mockito equivalents for comparison. Take them with a pinch of salt, they're rough & don't cover all cases.
+
+| Benchmark                                       | Mode    | Cnt  | Score        | Error         | Units |
+| ----------------------------------------------- | ------- | ---- | ------------ | ------------- | ----- |
+| benchmarkCallMockedMethodMockery                | thrpt   | 10   |  5276808.809 | ±  18245.556  | ops/s |
+| benchmarkCallMockedMethodMockito                | thrpt   | 10   |    82936.094 | ±   2057.023  | ops/s |
+| benchmarkCallMockedMethodMockery                | thrpt   | 10   |  5276808.809 | ±  18245.556  | ops/s |
+| benchmarkCallMockedMethodMockito                | thrpt   | 10   |    82936.094 | ±   2057.023  | ops/s |
+| benchmarkCallMockedMethodWithoutHistoryMockery  | thrpt   | 10   |  5527766.895 | ±  20608.835  | ops/s |
+| benchmarkCallMockedMethodWithoutHistoryMockito  | thrpt   | 10   |    87380.608 | ±    220.377  | ops/s |
+| benchmarkCallMultipleMockedMethodMockery        | thrpt   | 10   |  2824244.780 | ±  28088.784  | ops/s |
+| benchmarkCallMultipleMockedMethodMockito        | thrpt   | 10   |    40799.564 | ±    716.411  | ops/s |
+| benchmarkCallWhenMockery                        | thrpt   | 10   |  2116378.389 | ±   9271.883  | ops/s |
+| benchmarkCallWhenMockito                        | thrpt   | 10   |     3383.156 | ±    128.891  | ops/s |
+| benchmarkCallWhenPrimitiveMockery               | thrpt   | 10   |  2890055.036 | ±  13057.888  | ops/s |
+| benchmarkCallWhenPrimitiveMockito               | thrpt   | 10   |     2581.798 | ±     68.374  | ops/s |
+| benchmarkCreatingMockMockery                    | thrpt   | 10   | 29780347.999 | ± 377141.126  | ops/s |
+| benchmarkCreatingMockMockito                    | thrpt   | 10   |  1987538.622 | ±   4016.358  | ops/s |
+| benchmarkResetCallSingleArgWhenChainMockery     | thrpt   | 10   |   720096.361 | ±   9254.991  | ops/s |
+| benchmarkResetCallSingleArgWhenChainMockito     | thrpt   | 10   |    15808.211 | ±     53.136  | ops/s |
+| benchmarkResetCallWhenChainMockery              | thrpt   | 10   |  1096411.960 | ±   2046.979  | ops/s |
+| benchmarkResetCallWhenChainMockito              | thrpt   | 10   |    16687.147 | ±     77.776  | ops/s |
+| benchmarkResetCallWhenMockery                   | thrpt   | 10   |  2040258.564 | ±   4022.442  | ops/s |
+| benchmarkResetCallWhenMockito                   | thrpt   | 10   |    28068.975 | ±    138.278  | ops/s |
+| benchmarkResetThenVerifyMockery                 | thrpt   | 10   |  1730232.237 | ±   4652.011  | ops/s |
+| benchmarkResetThenVerifyMockito                 | thrpt   | 10   |    28421.756 | ±    164.791  | ops/s |
+| benchmarkVerifyMockery                          | thrpt   | 10   |  1748486.989 | ±   4217.442  | ops/s |
+| benchmarkVerifyMockito                          | thrpt   | 10   |     1545.149 | ±     14.545  | ops/s |
+
 ## TODO
 
 * Cleanup Spy/Matcher logic
