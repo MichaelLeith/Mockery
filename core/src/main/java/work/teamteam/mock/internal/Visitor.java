@@ -107,11 +107,11 @@ public class Visitor<T> {
 
     /**
      * Special case of run for methods with no args
-     * @param target
-     * @param key
-     * @param clazz
-     * @return
-     * @throws Throwable
+     * @param target list to add data to - this should be a class member
+     * @param key method name + description being called
+     * @param clazz return type the method expects
+     * @return an instance of the expected return type, either taken from registered callbacks or the default fallback
+     * @throws Throwable throws if either the callback or fallbacks throw
      */
     public Object run(final List<Object[]> target,
                       final String key,
@@ -172,7 +172,7 @@ public class Visitor<T> {
     }
 
     /**
-     * Resets the current tracker & clears all callbacks
+     * Resets the current tracker and clears all callbacks
      * Also resets the trackers call history. This should be used as often as possible
      * as recorded history is unbounded and grows linearly with mock method calls
      */
@@ -200,6 +200,11 @@ public class Visitor<T> {
         }
     }
 
+    /**
+     * Rollbacks the last called visitors entry, and returns a Mock capturing it
+     * @param <T> return type of the last entries output
+     * @return A mock describing the last method call seen
+     */
     public static <T> Mock<T> rollbackLast() {
         synchronized (DEFAULT_VERIFIER) {
             final List<Object[]> last = lastCall.trackers.get(lastCall.lastKey);
@@ -232,8 +237,9 @@ public class Visitor<T> {
     }
 
     /**
-     * Converts the call history into a Map<MethodName+Description, CallHistory> to make lookup easier
+     * Converts the call history into a {@literal Map<MethodName+Description, CallHistory>} to make lookup easier
      * at the expense of absolute ordering
+     * @param key method to collect a history for
      * @return reformatted call history
      */
     public CallHistory collect(final String key) {

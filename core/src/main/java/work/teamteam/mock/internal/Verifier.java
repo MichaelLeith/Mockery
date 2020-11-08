@@ -33,10 +33,11 @@ public class Verifier {
     }
 
     /**
-     * Checks that the given key & matchers (or args) were seen by the tracker the specified number of times
+     * Checks that the given key and matchers (or args) were seen by the tracker the specified number of times
      * @param visitor visitor to get data from
      * @param key method name + description to test
      * @param matchers optional matchers to check, if empty args are used instead
+     * @param history history to use if any matchers are given
      * @param args raw arguments to check for
      */
     public void verify(final Visitor<?> visitor,

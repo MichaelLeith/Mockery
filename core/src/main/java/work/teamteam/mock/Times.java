@@ -26,7 +26,7 @@ public final class Times {
     private Times() {}
 
     /**
-     * i -> i == count
+     * {@literal i -> i == count}
      * @param count num times
      * @return predicate
      */
@@ -35,7 +35,7 @@ public final class Times {
     }
 
     /**
-     * i -> i > count
+     * {@literal i -> i > count}
      * @param count num times
      * @return predicate
      */
@@ -44,7 +44,7 @@ public final class Times {
     }
 
     /**
-     * i -> i >= count
+     * {@literal i -> i >= count}
      * @param count num times
      * @return predicate
      */
@@ -53,7 +53,7 @@ public final class Times {
     }
 
     /**
-     * i -> i < count
+     * {@literal i -> i < count}
      * @param count num times
      * @return predicate
      */
@@ -62,7 +62,7 @@ public final class Times {
     }
 
     /**
-     * i -> i <= count
+     * {@literal i -> i <= count}
      * @param count num times
      * @return predicate
      */

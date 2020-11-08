@@ -97,7 +97,7 @@ public class Mockery {
      * @return an instance implementing clazz
      */
     public static <T> T mock(final Class<T> clazz, final boolean trackHistory) {
-        return mock(clazz, Defaults.Impl.IMPL, trackHistory);
+        return mock(clazz, trackHistory, Defaults.Impl.IMPL);
     }
 
     /**
@@ -109,7 +109,7 @@ public class Mockery {
      * @return an instance implementing clazz
      */
     public static <T> T mock(final Class<T> clazz, final Defaults defaults) {
-        return mock(clazz, defaults, true);
+        return mock(clazz, true, defaults);
     }
 
     /**
@@ -117,15 +117,16 @@ public class Mockery {
      * with every method returning a default value based on their return type. This default is specified by "defaults"
      * @param clazz class to implement
      * @param defaults lets you specify the default values (per class) returned when methods are called
+     * @param trackHistory whether to track history
      * @param <T> type of the class
      * @return an instance implementing clazz
      */
-    public static <T> T mock(final Class<T> clazz, final Defaults defaults, final boolean trackHistory) {
+    public static <T> T mock(final Class<T> clazz, final boolean trackHistory, final Defaults defaults) {
         return build(clazz, null, defaults, trackHistory);
     }
 
     /**
-     * Creates a new spy around impl. With spies you can override methods & record their call count. Any method
+     * Creates a new spy around impl. With spies you can override methods and record their call count. Any method
      * you don't override will invoke the equivalent method in impl.
      * @param impl the object to wrap
      * @param <T> type of the class
@@ -140,7 +141,7 @@ public class Mockery {
     }
 
     /**
-     * Creates a new spy. This is equivalent to spy(new clazz(args...)). With spies you can override methods &
+     * Creates a new spy. This is equivalent to spy(new clazz(args...)). With spies you can override methods and
      * record their call count. Any method you don't override will invoke the equivalent method in impl.
      * @param clazz the class to spy on
      * @param args args to pass to the instance of clazz we're instanciating
@@ -152,7 +153,7 @@ public class Mockery {
     }
 
     /**
-     * Creates a new spy. This is equivalent to spy(new clazz(args...)). With spies you can override methods &
+     * Creates a new spy. This is equivalent to spy(new clazz(args...)). With spies you can override methods and
      * record their call count. Any method you don't override will invoke the equivalent method in impl.
      * @param clazz the class to spy on
      * @param trackHistory whether to track history
@@ -189,6 +190,7 @@ public class Mockery {
      * Any calls not matching the two predicates ("any()" and "eq("foo")") will return the default
      * @param o object to override. This is provided for convenience, we actually use the last called method of any
      *          mocked object.
+     * @param <T> return type of the method being configured
      * @return a Mock for specifying your overrides
      */
     @SuppressWarnings("unused")
@@ -238,7 +240,7 @@ public class Mockery {
      * Creates a class that extends clazz with the requirements for mocking/spying (implements Trackable)
      * @param clazz class to extend
      * @param <T> generic type of the class
-     * @return A class extending T & implementing Trackable
+     * @return A class extending T and implementing Trackable
      * @throws Exception an exception if we fail to extend the class, e.g if it is final
      */
     private static <T> Class<?> inject(final Class<T> clazz) throws Exception {

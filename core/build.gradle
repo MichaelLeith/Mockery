@@ -61,6 +61,7 @@ jacocoTestCoverageVerification {
 test {
     finalizedBy jacocoTestReport
 }
+test.jvmArgs = ["--illegal-access=deny"]
 
 jacocoTestReport {
     dependsOn test
@@ -75,5 +76,10 @@ jacocoTestReport {
         csv.enabled false
         html.destination file("${buildDir}/jacocoHtml")
     }
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs << '-Xlint:unchecked'
+    options.deprecation = true
 }
 

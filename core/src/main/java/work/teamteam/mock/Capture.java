@@ -22,7 +22,7 @@ import java.util.Objects;
 
 /**
  * Used alongside Mockery.verify to "capture" arguments previously passed to a method
- * @param <T>
+ * @param <T> type we're capturing
  */
 public class Capture<T> {
     private final Class<T> clazz;

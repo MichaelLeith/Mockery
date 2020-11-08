@@ -37,7 +37,7 @@ public class Matchers {
     /**
      * matches all values (including null)
      * @param <T> Type of arg we're matching
-     * @return Default return value for <T>
+     * @return Default return value for T
      */
     public static <T> T any() {
         return matches(a -> true);
@@ -46,7 +46,7 @@ public class Matchers {
     /**
      * matches null
      * @param <T> Type of arg we're matching
-     * @return Default return value for <T>
+     * @return Default return value for T
      */
     public static <T> T isNull() {
         return matches(Objects::isNull);
@@ -56,7 +56,7 @@ public class Matchers {
      * matches all non-null variables assignable from clazz
      * @param clazz class to match
      * @param <T> Type of arg we're matching
-     * @return Default return value for <T>
+     * @return Default return value for T
      */
     public static <T> T any(Class<T> clazz) {
         return matches(a -> a != null && clazz.isAssignableFrom(a.getClass()));
@@ -208,8 +208,10 @@ public class Matchers {
 
     /**
      * returns true if the parameter matches t.
-     * If t == null this is equivalent to Matchers::isNull(), otherwise it checks param -> t.equals(param)
+     * If {@literal t == null } this is equivalent to Matchers::isNull(),
+     * otherwise it checks {@literal param -> t.equals(param) }
      * @param t primitive to match
+     * @param <T> generic type we're capturing
      * @return Default return value for T
      */
     public static <T> T eq(final T t) {
@@ -221,14 +223,17 @@ public class Matchers {
      * Used alongside verify to extract values of a given parameter.
      *
      * E.g
+     * {@code
      * final Capture<Integer> capture = Capture.of(Integer.class);
      * verify(foo, 1).doSomething(capture(capture));
      * assertEquals(100, capture.tail()); // get the last value passed to foo.doSomething(int)
+     * }
      *
      * @param capture capture to register
      * @param <T> generic type of this parameter we'll capture
      * @return Default return value for T
      */
+    @SuppressWarnings("unchecked")
     public static <T> T capture(final Capture<T> capture) {
         REGISTER.add(capture::add);
         return (T) Defaults.Impl.IMPL.get(capture.getClazz());

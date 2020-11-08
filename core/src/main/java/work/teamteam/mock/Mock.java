@@ -106,6 +106,7 @@ public class Mock<T> implements Visitor.Fn {
     /**
      * The next call to the method will throw e
      * @param e exception to throw
+     * @param <S> type of the exception
      * @return this mock for chaining
      */
     public <S extends Throwable> Mock<T> thenThrow(final S e) {
