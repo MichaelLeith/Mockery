@@ -79,7 +79,7 @@ Object/array - null
 Benchmarks are all run on An Intel i74870HQ (a mid 2014 Macbook With OSX 10.14.5), with Mockito equivalents for comparison. Take them with a pinch of salt, they're rough & don't cover all cases.
 
 | Benchmark                                       | Mode    | Cnt  | Score        | Error         | Units |
-| ----------------------------------------------- | ------- | ---- | ------------ | ------------- | ----- |
+| :---------------------------------------------- | ------- | ---: | -----------: | ------------: | ----- |
 | benchmarkCallMockedMethodMockery                | thrpt   | 10   |  5276808.809 | ±  18245.556  | ops/s |
 | benchmarkCallMockedMethodMockito                | thrpt   | 10   |    82936.094 | ±   2057.023  | ops/s |
 | benchmarkCallMockedMethodMockery                | thrpt   | 10   |  5276808.809 | ±  18245.556  | ops/s |
