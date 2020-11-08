@@ -1,6 +1,6 @@
 # Mockery
 
-This is a quick library to learn how Mocking frameworks (like Mockito) in Java (currently 14, but likely works for java8+) work.
+This is a quick library to learn how Mocking frameworks (like Mockito) in Java (currently 14, but likely works for java8+) work with minor changes.
 
 ## Dependencies
 
