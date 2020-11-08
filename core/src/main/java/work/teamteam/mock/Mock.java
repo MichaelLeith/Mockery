@@ -46,15 +46,16 @@ public class Mock<T> implements Visitor.Fn {
      * @param key method signature we are mocking
      * @param args args the method saw
      */
+    @SuppressWarnings("unchecked")
     public Mock(final Visitor<?> last, final String key, final Object... args) {
         this.state = new ArrayList<>(4);
-        List<Predicate<Object>> matchers = Matchers.getMatchers();
-        if (matchers.isEmpty()) {
-            matchers = new ArrayList<>(args.length);
-            for (final Object arg: args) {
-                matchers.add(arg == null ? Objects::isNull : arg::equals);
+        Predicate<Object>[] matchers = Matchers.getMatchers();
+        if (matchers == null) {
+            matchers = new Predicate[args.length];
+            for (int i = 0; i < args.length; i++) {
+                matchers[i] = (args[i] == null ? Objects::isNull : args[i]::equals);
             }
-        } else if (args.length != matchers.size()) {
+        } else if (args.length != matchers.length) {
             throw new RuntimeException("Not all arguments mocked, you must use eq for literals with Matchers");
         }
         last.registerCallback(this, key, matchers);
@@ -62,13 +63,7 @@ public class Mock<T> implements Visitor.Fn {
 
     @Override
     public Object apply(final Object[] args) throws Throwable {
-        if (state.isEmpty()) {
-            return null;
-        }
-        if (index < state.size()) {
-            index++;
-        }
-        return state.get(index - 1).apply(args);
+        return state.isEmpty() ? null : state.get((index < state.size() ? ++index : index) - 1).apply(args);
     }
 
     private Mock<T> add(final Visitor.Fn fn) {

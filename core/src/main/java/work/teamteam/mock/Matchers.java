@@ -235,8 +235,7 @@ public class Matchers {
      */
     @SuppressWarnings("unchecked")
     public static <T> T capture(final Capture<T> capture) {
-        REGISTER.add(capture::add);
-        return (T) Defaults.Impl.IMPL.get(capture.getClazz());
+        return (T) add(capture::add, capture.getClazz());
     }
 
     /**
@@ -247,8 +246,7 @@ public class Matchers {
      */
     @SuppressWarnings("unchecked")
     public static <T> T matches(final Predicate<T> condition) {
-        REGISTER.add((Predicate<Object>) condition);
-        return null;
+        return (T) add((Predicate<Object>) condition, Object.class);
     }
 
     /**
@@ -257,8 +255,7 @@ public class Matchers {
      * @return Default return value for bools
      */
     public static boolean matchesBool(final BooleanPredicate condition) {
-        REGISTER.add(i -> typeCheck(i, Boolean.class) && condition.test((boolean) i));
-        return (boolean) Defaults.Impl.IMPL.get(boolean.class);
+        return (boolean) add(i -> typeCheck(i, Boolean.class) && condition.test((boolean) i), boolean.class);
     }
 
     /**
@@ -267,8 +264,7 @@ public class Matchers {
      * @return Default return value for bytes
      */
     public static byte matchesByte(final BytePredicate condition) {
-        REGISTER.add(i -> typeCheck(i, Byte.class) && condition.test((byte) i));
-        return (byte) Defaults.Impl.IMPL.get(byte.class);
+        return (byte) add(i -> typeCheck(i, Byte.class) && condition.test((byte) i), byte.class);
     }
 
     /**
@@ -277,8 +273,7 @@ public class Matchers {
      * @return Default return value for chars
      */
     public static char matchesChar(final CharPredicate condition) {
-        REGISTER.add(i -> typeCheck(i, Character.class) && condition.test((char) i));
-        return (char) Defaults.Impl.IMPL.get(char.class);
+        return (char) add(i -> typeCheck(i, Character.class) && condition.test((char) i), char.class);
     }
 
     /**
@@ -287,8 +282,7 @@ public class Matchers {
      * @return Default return value for shorts
      */
     public static short matchesShort(final ShortPredicate condition) {
-        REGISTER.add(i -> typeCheck(i, Short.class) && condition.test((short) i));
-        return (short) Defaults.Impl.IMPL.get(short.class);
+        return (short) add(i -> typeCheck(i, Short.class) && condition.test((short) i), short.class);
     }
 
     /**
@@ -297,8 +291,7 @@ public class Matchers {
      * @return Default return value for ints
      */
     public static int matchesInt(final IntPredicate condition) {
-        REGISTER.add(i -> typeCheck(i, Integer.class) && condition.test((int) i));
-        return (int) Defaults.Impl.IMPL.get(int.class);
+        return (int) add(i -> typeCheck(i, Integer.class) && condition.test((int) i), int.class);
     }
 
     /**
@@ -307,8 +300,7 @@ public class Matchers {
      * @return Default return value for longs
      */
     public static long matchesLong(final LongPredicate condition) {
-        REGISTER.add(i -> typeCheck(i, Long.class) && condition.test((long) i));
-        return (long) Defaults.Impl.IMPL.get(long.class);
+        return (long) add(i -> typeCheck(i, Long.class) && condition.test((long) i), long.class);
     }
 
     /**
@@ -317,8 +309,7 @@ public class Matchers {
      * @return Default return value for floats
      */
     public static float matchesFloat(final FloatPredicate condition) {
-        REGISTER.add(i -> typeCheck(i, Float.class) && condition.test((float) i));
-        return (float) Defaults.Impl.IMPL.get(float.class);
+        return (float) add(i -> typeCheck(i, Float.class) && condition.test((float) i), float.class);
     }
 
     /**
@@ -327,25 +318,31 @@ public class Matchers {
      * @return Default return value for doubles
      */
     public static double matchesDouble(final DoublePredicate condition) {
-        REGISTER.add(i -> typeCheck(i, Double.class) && condition.test((double) i));
-        return (double) Defaults.Impl.IMPL.get(double.class);
+        return (double) add(i -> typeCheck(i, Double.class) && condition.test((double) i), double.class);
     }
 
     private static boolean typeCheck(final Object i, final Class<?> clazz) {
         return i != null && clazz.isAssignableFrom(i.getClass());
     }
 
+    private static Object add(final Predicate<Object> pred, final Class<?> clazz) {
+        REGISTER.add(pred);
+        return Defaults.Impl.IMPL.get(clazz);
+    }
+
     /**
      * INTERNAL: returns the current matchers and resets the global list
      * @return list of matcher predicates used since the last global reset
      */
-    public static List<Predicate<Object>> getMatchers() {
+    @SuppressWarnings("unchecked")
+    public static Predicate<Object>[] getMatchers() {
         if (!REGISTER.isEmpty()) {
-            final List<Predicate<Object>> cpy = new ArrayList<>(REGISTER);
+            final Predicate<Object>[] cpy = new Predicate[REGISTER.size()];
+            REGISTER.toArray(cpy);
             REGISTER.clear();
             return cpy;
         }
-        return Collections.emptyList();
+        return null;
     }
 
     public interface FloatPredicate {

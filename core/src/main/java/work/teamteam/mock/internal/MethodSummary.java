@@ -16,9 +16,6 @@
 
 package work.teamteam.mock.internal;
 
-import java.util.Arrays;
-import java.util.Objects;
-
 public final class MethodSummary {
     private final String name;
     private final String descriptor;
@@ -53,13 +50,12 @@ public final class MethodSummary {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final MethodSummary that = (MethodSummary) o;
-        return name.equals(that.name) &&
-                descriptor.equals(that.descriptor) &&
-                Objects.equals(signature, that.signature);
+        return name.equals(that.name) && descriptor.equals(that.descriptor) &&
+                (signature == that.signature || signature != null && signature.equals(that.signature));
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, descriptor, signature);
+        return 29791 + name.hashCode() + descriptor.hashCode() + (signature == null ? 0 : signature.hashCode());
     }
 }

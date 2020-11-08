@@ -20,10 +20,9 @@ import org.junit.jupiter.api.Test;
 import work.teamteam.mock.Defaults;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -34,7 +33,7 @@ public class VerifierTest {
         final List<Object[]> list = visitor.init("foo");
         visitor.run(list, "foo", Object.class);
         visitor.run(list, "foo", Object.class);
-        new Verifier(i -> i == 2).verify(visitor, "foo", Collections.emptyList(), list);
+        new Verifier(i -> i == 2).verify(visitor, "foo", null, list);
     }
 
     @Test
@@ -44,7 +43,7 @@ public class VerifierTest {
         visitor.run(list, "foo", Object.class);
         visitor.run(list, "foo", Object.class);
         for (int j = 0; j < 10; j++) {
-            new Verifier(i -> i == 2).verify(visitor, "foo", Collections.emptyList(), list);
+            new Verifier(i -> i == 2).verify(visitor, "foo", null, list);
         }
     }
 
@@ -54,7 +53,7 @@ public class VerifierTest {
         final List<Object[]> list = new ArrayList<>();
         visitor.run(list, "foo", Object.class);
         assertThrows(RuntimeException.class, () ->
-                new Verifier(i -> i == 2).verify(visitor, "foo", Collections.emptyList(), list));
+                new Verifier(i -> i == 2).verify(visitor, "foo", null, list));
     }
 
     @Test
@@ -62,9 +61,9 @@ public class VerifierTest {
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
         final List<Object[]> list = visitor.init("foo2");
         visitor.run(list, "foo2", Object.class);
-        new Verifier(i -> i == 1).verify(visitor, "foo2", Collections.emptyList(), list);
+        new Verifier(i -> i == 1).verify(visitor, "foo2", null, list);
         assertThrows(RuntimeException.class, () ->
-                new Verifier(i -> i == 1).verify(visitor, "foo", Collections.emptyList(), new ArrayList<>()));
+                new Verifier(i -> i == 1).verify(visitor, "foo", null, new ArrayList<>()));
     }
 
     @Test
@@ -72,9 +71,9 @@ public class VerifierTest {
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
         final List<Object[]> list = visitor.init("foo");
         visitor.run(list, "foo", Object.class, 1);
-        new Verifier(i -> i == 1).verify(visitor, "foo", Collections.emptyList(), list, 1);
+        new Verifier(i -> i == 1).verify(visitor, "foo", null, list, 1);
         assertThrows(RuntimeException.class, () ->
-                new Verifier(i -> i == 1).verify(visitor, "foo", Collections.emptyList(), new ArrayList<>()));
+                new Verifier(i -> i == 1).verify(visitor, "foo", null, new ArrayList<>()));
     }
 
     @Test
@@ -82,19 +81,21 @@ public class VerifierTest {
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
         final List<Object[]> list = new ArrayList<>();
         visitor.run(list, "foo", Object.class, 1);
-        assertThrows(RuntimeException.class, () -> new Verifier(i -> i == 1).verify(visitor, "foo", Collections.emptyList(), new ArrayList<>()));
-        assertThrows(RuntimeException.class, () -> new Verifier(i -> i == 1).verify(visitor, "foo", Collections.emptyList(), new ArrayList<>(), 1, 2));
+        assertThrows(RuntimeException.class, () -> new Verifier(i -> i == 1).verify(visitor, "foo", null, new ArrayList<>()));
+        assertThrows(RuntimeException.class, () -> new Verifier(i -> i == 1).verify(visitor, "foo", null, new ArrayList<>(), 1, 2));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void testMatchCondition() throws Throwable {
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
         final List<Object[]> list = new ArrayList<>();
         visitor.run(list, "foo", Object.class, 1);
         visitor.run(list, "foo", Object.class, 1);
-        new Verifier(i -> i == 2).verify(visitor, "foo", Collections.singletonList(i -> (int) i == 1), list, 1);
+        new Verifier(i -> i == 2).verify(visitor, "foo", new Predicate[]{i -> (int) i == 1}, list, 1);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void testDoesntMatchCondition() throws Throwable {
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
@@ -102,9 +103,10 @@ public class VerifierTest {
         visitor.run(list, "foo", Object.class, 1);
         visitor.run(list, "foo", Object.class, 2);
         visitor.run(list, "foo", Object.class, 1);
-        new Verifier(i -> i == 1).verify(visitor, "foo", Collections.singletonList(i -> (int) i == 2), list, 1);
+        new Verifier(i -> i == 1).verify(visitor, "foo", new Predicate[]{i -> (int) i == 2}, list, 1);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void testThrowsOnWrongNumPredicateArgs() throws Throwable {
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
@@ -112,9 +114,9 @@ public class VerifierTest {
         visitor.run(list, "foo", Object.class, 1);
         // too many
         assertThrows(RuntimeException.class, () -> new Verifier(i -> i == 1).verify(visitor, "foo",
-                Arrays.asList(i -> (int) i == 1, Objects::nonNull), list, 1));
+                new Predicate[]{i -> (int) i == 1, Objects::nonNull}, list, 1));
         // too few
         assertThrows(RuntimeException.class, () -> new Verifier(i -> i == 1).verify(visitor, "foo",
-                Collections.singletonList(i -> (int) i == 1), list, 1, 2));
+                new Predicate[]{i -> (int) i == 1}, list, 1, 2));
     }
 }

@@ -19,7 +19,6 @@ package work.teamteam.mock.internal;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.IntPredicate;
-import java.util.function.LongPredicate;
 import java.util.function.Predicate;
 
 /**
@@ -42,13 +41,13 @@ public class Verifier {
      */
     public void verify(final Visitor<?> visitor,
                        final String key,
-                       final List<Predicate<Object>> matchers,
+                       final Predicate<Object>[] matchers,
                        final List<Object[]> history,
                        final Object... args) {
         int calls;
-        if (matchers.isEmpty()) {
+        if (matchers == null) {
             calls = visitor.get(key, args);
-        } else if (matchers.size() != args.length) {
+        } else if (matchers.length != args.length) {
             throw new RuntimeException("Not all arguments mocked, you must use eq for literals with Matchers");
         } else {
             calls = 0;
@@ -59,8 +58,8 @@ public class Verifier {
              * @param args list of per-argument predicates to match
              * @return the number of matches
              */
-            for (final Object[] entry: history) {
-                if (entry.length == args.length && matches(matchers, entry)) {
+            for (int i = 0; i < history.size(); i++) {
+                if (history.get(i).length == args.length && matches(matchers, history.get(i))) {
                     calls++;
                 }
             }
@@ -71,9 +70,9 @@ public class Verifier {
         }
     }
 
-    private static boolean matches(final List<Predicate<Object>> conditions, final Object[] args) {
+    private static boolean matches(final Predicate<Object>[] conditions, final Object[] args) {
         for (int i = 0; i < args.length; i++) {
-            if (!conditions.get(i).test(args[i])) {
+            if (!conditions[i].test(args[i])) {
                 return false;
             }
         }

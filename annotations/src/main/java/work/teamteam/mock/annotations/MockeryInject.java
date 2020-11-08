@@ -78,7 +78,7 @@ public final class MockeryInject {
             return;
         }
         fields.sort(Comparator.comparing(f -> f.getType().getName()));
-        // @todo: graph traversal
+        // @todo: graph traversal, lets support inter dependency between InjectMocks
         for (final Field field: toInject) {
             if (field.get(o) != null) {
                 throw new RuntimeException("InjectMocks annotated field must not be initialized");
@@ -205,6 +205,6 @@ public final class MockeryInject {
         if (type.isPrimitive()) {
             return LOOKUP.get(type).apply(o, field);
         }
-        return field.get(o); // @todo: primitives
+        return field.get(o);
     }
 }

@@ -80,22 +80,24 @@ public class VisitorTest {
         assertEquals(impl.withArgs(2L), visitor.run(new ArrayList<>(), "withArgs(J)I", int.class, 2));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void testUsesCallback() throws Throwable {
         final Impl impl = new Impl();
         final Visitor<?> visitor = new Visitor<>(impl, Defaults.Impl.IMPL, true);
-        visitor.registerCallback(a -> 10, "withArgs(I)I", Collections.singletonList(i -> (int) i == 1));
+        visitor.registerCallback(a -> 10, "withArgs(I)I", i -> (int) i == 1);
         assertEquals(impl.withArgs(), visitor.run(new ArrayList<>(), "withArgs()I", int.class));
         assertEquals(10, visitor.run(new ArrayList<>(), "withArgs(I)I", int.class, 1));
         assertEquals(impl.withArgs(2), visitor.run(new ArrayList<>(), "withArgs(I)I", int.class, 2));
         assertEquals(impl.withArgs(2L), visitor.run(new ArrayList<>(), "withArgs(J)I", int.class, 2));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void testThrowOnBadCallback() {
         final Impl impl = new Impl();
         final Visitor<?> visitor = new Visitor<>(impl, Defaults.Impl.IMPL, true);
-        visitor.registerCallback(a -> "sad", "withArgs(I)I", Collections.singletonList(i -> (int) i == 1));
+        visitor.registerCallback(a -> "sad", "withArgs(I)I", i -> (int) i == 1);
         assertDoesNotThrow(() -> visitor.run(new ArrayList<>(), "withArgs(I)I", int.class, 1));
     }
 
@@ -122,11 +124,12 @@ public class VisitorTest {
         assertEquals(impl.withArgs(), visitor.run(hist, "withArgs()I", int.class));
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void testRunWithVerifierAndCallback() throws Throwable {
         final Impl impl = new Impl();
         final Visitor<?> visitor = new Visitor<>(impl, Defaults.Impl.IMPL, true);
-        visitor.registerCallback(a -> 2, "withArgs()I", Collections.emptyList());
+        visitor.registerCallback(a -> 2, "withArgs()I");
         final List<Object[]> calls = visitor.init("withArgs()I");
         assertEquals(2,visitor.run(calls, "withArgs()I", int.class));
 

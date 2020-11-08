@@ -111,8 +111,6 @@ public class MockeryTest {
 
     public static final class Final {}
 
-    // @todo: test inheritance
-    // @todo: can you spy an interface?
     @Test
     void testFinal() {
         assertThrows(RuntimeException.class, () -> mock(Final.class));
@@ -234,7 +232,6 @@ public class MockeryTest {
 
         when(impl.intAcc("lol", 1L, 0)).thenReturn("welp2");
         when(impl.intAcc("lol", 1L, 1)).thenReturn("welp3");
-        // @todo: can we support this?
         assertNull(impl.intAcc("lol", 1L, 0));
         assertEquals("welp3", impl.intAcc("lol", 1L, 1));
         assertNull(impl.intAcc("lol", 1L, 2));
@@ -360,7 +357,6 @@ public class MockeryTest {
         assertEquals(2, impl.i());
         assertEquals(2, impl.i());
 
-        // @todo: is it worth adding implicit conversion?
         when(impl.s()).thenReturn((short) impl.i());
         assertEquals(2, impl.s());
         assertEquals(impl.s(), impl.i());

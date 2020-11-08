@@ -40,7 +40,7 @@ public class Visitor<T> {
     // global state to support verify/when syntax.
     // as these methods don't directly receive the mock object we need some global state to record who was last touched
     // e.g when(foo.something(bar).doReturn(...)); will be tracking foo because it was last called
-    private static volatile Visitor<?> lastCall = null;
+    private static Visitor<?> lastCall = null;
     private final T impl;
     private final Defaults defaults;
     private final Map<String, List<Object[]>> trackers;
@@ -126,6 +126,7 @@ public class Visitor<T> {
     }
 
     /**
+     * @todo: improve this method
      * Attempts to call the "real" objects relevant method if this is a spy, otherwise falling back to the Defaults
      * @param clazz expected return type
      * @param key method name + description being called
@@ -136,7 +137,7 @@ public class Visitor<T> {
     private Object getFallback(final String key, final Class<?> clazz, final Object... args) throws Throwable {
         if (impl != null) {
             for (final Method method: impl.getClass().getDeclaredMethods()) {
-                if (key.equals(method.getName() + Type.getMethodDescriptor(method))) {
+                if (key.startsWith(method.getName()) && key.equals(method.getName() + Type.getMethodDescriptor(method))) {
                     try {
                         method.setAccessible(true);
                         return method.invoke(impl, args);
@@ -158,14 +159,16 @@ public class Visitor<T> {
      * @param key method name + description we're targetting
      * @param args list of conditions for using this predicate
      */
-    public void registerCallback(final Fn fn, final String key, final List<Predicate<Object>> args) {
+    @SuppressWarnings("unchecked")
+    public void registerCallback(final Fn fn, final String key, final Predicate<Object>... args) {
         if (callbacks == null) {
             callbacks = new ArrayList<>(4);
-        }
-        for (int i = 0; i < callbacks.size(); i++) {
-            if (callbacks.get(i).key.equals(key)) {
-                callbacks.set(i, new Callback(key, args, fn));
-                return;
+        } else {
+            for (int i = 0; i < callbacks.size(); i++) {
+                if (callbacks.get(i).key.equals(key)) {
+                    callbacks.set(i, new Callback(key, args, fn));
+                    return;
+                }
             }
         }
         callbacks.add(new Callback(key, args, fn));
@@ -232,8 +235,8 @@ public class Visitor<T> {
      * @param args arguments used
      * @return number of calls to this combination
      */
-    public int get(final String key, final Object... args) {
-        return collect(key).get(args);
+    public synchronized int get(final String key, final Object... args) {
+        return collect(key).perArgset.getOrDefault(Arrays.asList(args), 0);
     }
 
     /**
@@ -242,43 +245,43 @@ public class Visitor<T> {
      * @param key method to collect a history for
      * @return reformatted call history
      */
-    public CallHistory collect(final String key) {
-        synchronized (this) {
-            if (callHistories == null) {
-                callHistories = new HashMap<>();
-            }
-            CallHistory callHistory = callHistories.get(key);
-            if (callHistory == null) {
-                callHistory = new CallHistory();
-                callHistories.put(key, callHistory);
-            }
-            final List<Object[]> history = trackers.get(key);
-            if (history != null && callHistory.size != history.size()) {
-                for (int i = callHistory.size; i < history.size(); i++) {
-                    callHistory.update(history.get(i));
-                }
-            }
-            return callHistory;
+    public synchronized CallHistory collect(final String key) {
+        CallHistory callHistory = null;
+        if (callHistories == null) {
+            callHistories = new HashMap<>();
+        } else {
+            callHistory = callHistories.get(key);
         }
+        if (callHistory == null) {
+            callHistory = new CallHistory();
+            callHistories.put(key, callHistory);
+        }
+        final List<Object[]> history = trackers.get(key);
+        if (history != null && callHistory.size != history.size()) {
+            for (int i = callHistory.size; i < history.size(); i++) {
+                callHistory.update(history.get(i));
+            }
+        }
+        return callHistory;
     }
 
     private static final class Callback {
         private final String key;
-        private final List<Predicate<Object>> args;
+        private final Predicate<Object>[] args;
         private final Fn fn;
 
-        public Callback(final String key, final List<Predicate<Object>> args, final Fn fn) {
+        public Callback(final String key, final Predicate<Object>[] args, final Fn fn) {
             this.key = key;
             this.args = args;
             this.fn = fn;
         }
 
         public boolean matches(final String name, final Object... args) {
-            if (this.args.size() != args.length || !this.key.equals(name)) {
+            if (this.args.length != args.length || !this.key.equals(name)) {
                 return false;
             }
             for (int i = 0; i < args.length; i++) {
-                if (!this.args.get(i).test(args[i])) {
+                if (!this.args[i].test(args[i])) {
                     return false;
                 }
             }
@@ -300,26 +303,16 @@ public class Visitor<T> {
             perArgset.put(wrapper, perArgset.getOrDefault(wrapper, 0) + 1);
         }
 
-        /**
-         * Returns the number of times the CallHistory has seen the specific set of arguments
-         * @param args list of args to check for
-         * @return number of times these have been seen
-         */
-        public int get(final Object... args) {
-            return perArgset.getOrDefault(Arrays.asList(args), 0);
-        }
-
         @Override
         public boolean equals(final Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            final CallHistory that = (CallHistory) o;
-            return perArgset.equals(that.perArgset);
+            return perArgset.equals(((CallHistory) o).perArgset);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(perArgset);
+            return 31 + perArgset.hashCode();
         }
     }
 

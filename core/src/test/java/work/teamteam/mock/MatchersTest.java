@@ -39,8 +39,7 @@ public class MatchersTest {
     void testMatcher(final Match match) {
         Matchers.getMatchers();
         match.fn.get();
-        final List<Predicate<Object>> predicates = Matchers.getMatchers();
-        assertEquals(match.matches, predicates.get(0).test(match.obj));
+        assertEquals(match.matches, Matchers.getMatchers()[0].test(match.obj));
     }
 
     @SuppressWarnings({"unused", "boxing"})

@@ -47,7 +47,6 @@ import java.util.function.IntPredicate;
  */
 public class Mockery {
     // @todo: thread safety
-    // @todo: test equals/hashCode
     private static final Map<Class<?>, Class<?>> TYPE_CACHE = new HashMap<>();
     private static final ObjenesisStd OBJENESIS_STD = new ObjenesisStd();
     private static final String IMPL_NAME = Type.getInternalName(Visitor.class);
@@ -162,21 +161,22 @@ public class Mockery {
      * @return an instance spying on clazz
      */
     public static <T> T spy(final Class<T> clazz, final boolean trackHistory, final Object... args) {
-        for (final Constructor<?> constructor: clazz.getDeclaredConstructors()) {
-            if (constructor.getParameterCount() == args.length) {
-                final Class<?>[] params = constructor.getParameterTypes();
-                for (int i = 0; i < args.length; i++) {
-                    if (!params[i].isAssignableFrom(args[i].getClass())) {
+        final Constructor<?>[] constructors = clazz.getDeclaredConstructors();
+        for (int i = 0; i < constructors.length; i++) {
+            if (constructors[i].getParameterCount() == args.length) {
+                final Class<?>[] params = constructors[i].getParameterTypes();
+                for (int j = 0; j < args.length; j++) {
+                    if (!params[j].isAssignableFrom(args[j].getClass())) {
                         break;
                     }
                 }
                 try {
-                    constructor.setAccessible(true);
-                    return spy(clazz.cast(constructor.newInstance(args)), trackHistory);
+                    constructors[i].setAccessible(true);
+                    return spy(clazz.cast(constructors[i].newInstance(args)), trackHistory);
                 } catch (IllegalAccessException | InstantiationException | InvocationTargetException e) {
                     throw new RuntimeException(e);
                 } finally {
-                    constructor.setAccessible(false);
+                    constructors[i].setAccessible(false);
                 }
             }
         }
@@ -311,6 +311,7 @@ public class Mockery {
         vis.visitFieldInsn(Opcodes.GETFIELD, clazz, IMPL, IMPL_DESC);
         vis.visitInsn(Opcodes.ARETURN);
         vis.visitMaxs(1, 1);
+        wr.visitEnd();
     }
 
     /**
@@ -361,9 +362,9 @@ public class Mockery {
      */
     private static void writeMethod(final ClassWriter wr, final String clazz, final MethodSummary summary) {
         final String descriptor = summary.getDescriptor();
-        final String key = summary.getName() + summary.getDescriptor();
+        final String key = summary.getName() + descriptor;
         final String var = key.replaceAll("[()/\\[]", "_").replace(';', '-');
-        wr.visitField(Opcodes.ACC_PRIVATE, var, Type.getDescriptor(List.class), null, null);
+        wr.visitField(Opcodes.ACC_PRIVATE, var, Type.getDescriptor(List.class), null, null).visitEnd();
 
         // create a shim that loads all arguments into an Object[] and passes them to
         // T Visitor::run(String name+descriptor, Class<T> returnType, Object[] args);
@@ -567,19 +568,15 @@ public class Mockery {
      * @param name name of the class
      * @param b bytes describing the class
      * @return a new class
-     * @throws Exception
      */
     private static Class<?> loadClass(final Class<?> parent, final String name, final byte[] b) throws Exception {
-        final ClassLoader loader = parent.getClassLoader();
-        final Class<?> cls = Class.forName("java.lang.ClassLoader");
-        final Method method = cls.getDeclaredMethod("defineClass", String.class, byte[].class, int.class, int.class);
-        final Class<?> clazz;
+        final Method method = Class.forName("java.lang.ClassLoader").getDeclaredMethod("defineClass",
+                String.class, byte[].class, int.class, int.class);
         try {
             method.setAccessible(true);
-            clazz = (Class<?>) method.invoke(loader, name, b, 0, b.length);
+            return (Class<?>) method.invoke(parent.getClassLoader(), name, b, 0, b.length);
         } finally {
             method.setAccessible(false);
         }
-        return clazz;
     }
 }

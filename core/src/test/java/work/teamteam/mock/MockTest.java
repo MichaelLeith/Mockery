@@ -25,12 +25,11 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MockTest {
     @Test
     void testMockFailsWithMissingArgs() {
-        assertTrue(Matchers.getMatchers().isEmpty());
+        assertNull(Matchers.getMatchers());
         Matchers.any();
         assertThrows(RuntimeException.class, () -> new Mock<>(new Visitor<>(null, Defaults.Impl.IMPL, true),
                 "foo", 1, null));
@@ -38,7 +37,7 @@ public class MockTest {
 
     @Test
     void testMockWithoutMatchers() throws Throwable {
-        assertTrue(Matchers.getMatchers().isEmpty());
+        assertNull(Matchers.getMatchers());
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
         final Mock<Integer> mock = new Mock<>(visitor, "foo", 1, null);
 
@@ -56,7 +55,7 @@ public class MockTest {
 
     @Test
     void testMockRepeatsLast() throws Throwable {
-        assertTrue(Matchers.getMatchers().isEmpty());
+        assertNull(Matchers.getMatchers());
         Matchers.eq(1);
         Matchers.any();
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
@@ -79,7 +78,7 @@ public class MockTest {
 
     @Test
     void testMockThenReturn() throws Throwable {
-        assertTrue(Matchers.getMatchers().isEmpty());
+        assertNull(Matchers.getMatchers());
         Matchers.eq(1);
         Matchers.any();
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
@@ -95,7 +94,7 @@ public class MockTest {
 
     @Test
     void testMockThenAnswer() throws Throwable {
-        assertTrue(Matchers.getMatchers().isEmpty());
+        assertNull(Matchers.getMatchers());
         Matchers.eq(1);
         Matchers.any();
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
@@ -115,7 +114,7 @@ public class MockTest {
 
     @Test
     void testMockThenThrow() throws Throwable {
-        assertTrue(Matchers.getMatchers().isEmpty());
+        assertNull(Matchers.getMatchers());
         Matchers.eq(1);
         Matchers.any();
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
@@ -131,7 +130,7 @@ public class MockTest {
 
     @Test
     void testMockThenThrowClass() throws Throwable {
-        assertTrue(Matchers.getMatchers().isEmpty());
+        assertNull(Matchers.getMatchers());
         Matchers.eq(1);
         Matchers.any();
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);

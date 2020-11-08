@@ -67,21 +67,17 @@ class MethodCollector extends ClassVisitor {
             ClassVisitor vis = null;
             if (interfaces.length != 0) {
                 vis = getChildVisitor();
-                for (final String i : interfaces) {
+                for (int i = 0; i < interfaces.length; i++) {
                     // there's no root interface, so don't have to worry about hitting java/lang methods
-                    new ClassReader(i).accept(vis, ClassReader.EXPAND_FRAMES);
+                    new ClassReader(interfaces[i]).accept(vis, ClassReader.EXPAND_FRAMES);
                 }
             }
-            if (superName != null && shouldCollect(superName)) {
+            if (superName != null && !superName.startsWith("java/lang")) {
                 new ClassReader(superName).accept(vis == null ? getChildVisitor() : vis, ClassReader.EXPAND_FRAMES);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    private boolean shouldCollect(final String name) {
-        return !name.startsWith("java/lang");
     }
 
     @Override
