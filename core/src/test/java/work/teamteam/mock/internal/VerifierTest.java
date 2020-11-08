@@ -97,6 +97,17 @@ public class VerifierTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void testMatchConditionButWrongNumberOfArgs() throws Throwable {
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
+        final List<Object[]> list = new ArrayList<>();
+        visitor.run(list, "foo", Object.class, 1);
+        visitor.run(list, "foo", Object.class, 1);
+        assertThrows(RuntimeException.class, () -> new Verifier(i -> i == 2).verify(visitor, "foo",
+                new Predicate[]{i -> (int) i == 1, i -> (int) i == 2}, list, 1, 2));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     void testDoesntMatchCondition() throws Throwable {
         final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
         final List<Object[]> list = new ArrayList<>();

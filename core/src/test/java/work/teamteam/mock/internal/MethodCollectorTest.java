@@ -33,6 +33,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MethodCollectorTest {
     @Test
+    void testThrowOnMissingInterface() {
+        final MethodCollector collector = new MethodCollector(Opcodes.ACC_FINAL,
+                false, Collections.emptySet(), new HashSet<>());
+        assertThrows(RuntimeException.class, () -> collector.visit(Opcodes.ASM9, 0, "foo",
+                "bar()V", null, new String[]{"fake"}));
+    }
+
+    @Test
     void testTraversal() throws IOException {
         final Set<MethodSummary> methods = new HashSet<>();
         final MethodCollector collector = new MethodCollector(Opcodes.ACC_FINAL,

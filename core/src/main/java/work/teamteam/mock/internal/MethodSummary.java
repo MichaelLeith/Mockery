@@ -16,6 +16,8 @@
 
 package work.teamteam.mock.internal;
 
+import java.util.Objects;
+
 public final class MethodSummary {
     private final String name;
     private final String descriptor;
@@ -23,8 +25,8 @@ public final class MethodSummary {
     private final String[] exceptions;
 
     public MethodSummary(final String name, final String descriptor, final String signature, final String[] exceptions) {
-        this.name = name;
-        this.descriptor = descriptor;
+        this.name = Objects.requireNonNull(name);
+        this.descriptor = Objects.requireNonNull(descriptor);
         this.signature = signature;
         this.exceptions = exceptions;
     }
@@ -51,7 +53,7 @@ public final class MethodSummary {
         if (o == null || getClass() != o.getClass()) return false;
         final MethodSummary that = (MethodSummary) o;
         return name.equals(that.name) && descriptor.equals(that.descriptor) &&
-                (signature == that.signature || signature != null && signature.equals(that.signature));
+                Objects.equals(signature, that.signature);
     }
 
     @Override

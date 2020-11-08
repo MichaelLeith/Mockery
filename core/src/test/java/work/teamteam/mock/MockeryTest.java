@@ -44,6 +44,7 @@ public class MockeryTest {
         float f();
         long l();
         double d();
+        Void vo();
         void arg(final String s);
         void arg(final float f);
         void arg(final double d);
@@ -53,6 +54,7 @@ public class MockeryTest {
         void arg(final long l);
         void arg(final double[] arr);
         void arg(final String s, final int i);
+        void arg(final Void v);
     }
 
     @SuppressWarnings("unused")
@@ -336,6 +338,9 @@ public class MockeryTest {
         assertEquals(0.0f, impl.f());
         assertEquals(0.0, impl.d());
         assertEquals(0, impl.l());
+        assertNull(impl.vo());
+        impl.arg((Void) null);
+        Mockery.verify(impl, 1).arg((Void) null);
         impl.arg("woo");
         impl.arg(1);
         impl.arg((byte) 1);

@@ -24,6 +24,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objenesis.ObjenesisStd;
 import work.teamteam.mock.internal.MethodSummary;
+import work.teamteam.mock.internal.Proxy;
 import work.teamteam.mock.internal.RootClassVisitor;
 import work.teamteam.mock.internal.Verifier;
 import work.teamteam.mock.internal.Visitor;
@@ -132,11 +133,11 @@ public class Mockery {
      * @return an instance spying on impl
      */
     public static <T> T spy(final T impl) {
-        return build(impl.getClass(), impl, Defaults.Impl.IMPL, true);
+        return build(impl.getClass(), new Proxy<>(impl), Defaults.Impl.IMPL, true);
     }
 
     public static <T> T spy(final T impl, final boolean trackHistory) {
-        return build(impl.getClass(), impl, Defaults.Impl.IMPL, trackHistory);
+        return build(impl.getClass(), new Proxy<>(impl), Defaults.Impl.IMPL, trackHistory);
     }
 
     /**
@@ -428,7 +429,7 @@ public class Mockery {
      */
     @SuppressWarnings("unchecked")
     private static <T> T build(final Class<?> clazz,
-                               final T impl,
+                               final Proxy<T> impl,
                                final Defaults defaults,
                                final boolean trackHistory) {
         try {
@@ -523,10 +524,8 @@ public class Mockery {
             vis.visitInsn(Opcodes.ICONST_0 + len);
         } else if (len < Byte.MAX_VALUE) {
             vis.visitIntInsn(Opcodes.BIPUSH, len);
-        } else if (len < Short.MAX_VALUE) {
-            vis.visitIntInsn(Opcodes.SIPUSH, len);
         } else {
-            vis.visitLdcInsn(len);
+            throw new RuntimeException("Unsupported number of parameters (the jdk specs support up to 255 params");
         }
     }
 
@@ -551,9 +550,7 @@ public class Mockery {
             j += arg.getSize();
 
             // handle boxing
-            if (arg.getSort() == Type.VOID) {
-                vis.visitInsn(Opcodes.ACONST_NULL);
-            } else if (arg.getSort() < PRIMITIVES.length) {
+            if (arg.getSort() != Type.VOID && arg.getSort() < PRIMITIVES.length) {
                 final Type clazz = PRIMITIVES[arg.getSort()];
                 vis.visitMethodInsn(Opcodes.INVOKESTATIC, clazz.getInternalName(), "valueOf",
                         Type.getMethodDescriptor(clazz, arg), false);

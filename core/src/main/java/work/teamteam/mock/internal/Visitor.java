@@ -16,12 +16,10 @@
 
 package work.teamteam.mock.internal;
 
-import org.objectweb.asm.Type;
 import work.teamteam.mock.Defaults;
 import work.teamteam.mock.Matchers;
 import work.teamteam.mock.Mock;
 
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,7 +39,7 @@ public class Visitor<T> {
     // as these methods don't directly receive the mock object we need some global state to record who was last touched
     // e.g when(foo.something(bar).doReturn(...)); will be tracking foo because it was last called
     private static Visitor<?> lastCall = null;
-    private final T impl;
+    private final Proxy<T> impl;
     private final Defaults defaults;
     private final Map<String, List<Object[]>> trackers;
     private final boolean trackHistory;
@@ -52,7 +50,7 @@ public class Visitor<T> {
     private String lastKey;
     private Object[] lastArgs;
 
-    public Visitor(final T impl, final Defaults defaults, final boolean trackHistory) {
+    public Visitor(final Proxy<T> impl, final Defaults defaults, final boolean trackHistory) {
         this.trackHistory = trackHistory;
         this.callbacks = null;
         this.impl = impl;
@@ -135,20 +133,7 @@ public class Visitor<T> {
      * @throws Throwable throws if the spied method throws, or if there is no equivalent method in the spied object
      */
     private Object getFallback(final String key, final Class<?> clazz, final Object... args) throws Throwable {
-        if (impl != null) {
-            for (final Method method: impl.getClass().getDeclaredMethods()) {
-                if (key.startsWith(method.getName()) && key.equals(method.getName() + Type.getMethodDescriptor(method))) {
-                    try {
-                        method.setAccessible(true);
-                        return method.invoke(impl, args);
-                    }  finally {
-                        method.setAccessible(false);
-                    }
-                }
-            }
-            throw new RuntimeException("Should not happen, missing method " + key);
-        }
-        return defaults.get(clazz);
+        return impl != null ? impl.match(key, args) : defaults.get(clazz);
     }
 
     /**

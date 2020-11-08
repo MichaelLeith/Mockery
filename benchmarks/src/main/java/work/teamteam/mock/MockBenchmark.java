@@ -53,8 +53,8 @@ import org.openjdk.jmh.infra.Blackhole;
  MockBenchmark.benchmarkVerifyMockery                          thrpt   10   1748486.989 ±   4217.442  ops/s
  MockBenchmark.benchmarkVerifyMockito                          thrpt   10      1545.149 ±     14.545  ops/s
  */
-@Warmup(iterations = 5, time = 5)
-@Measurement(iterations = 10, time = 5)
+@Warmup(iterations = 1, time = 5)
+@Measurement(iterations = 1, time = 5)
 @Fork(1)
 public class MockBenchmark {
     @State(Scope.Benchmark)
@@ -63,6 +63,8 @@ public class MockBenchmark {
         Target mockitoTarget;
         Target mockeryDisabledTarget;
         Target mockitoDisabledTarget;
+        Target mockerySpy;
+        Target mockitoSpy;
 
         @Setup(Level.Trial)
         public void setUp() {
@@ -71,6 +73,9 @@ public class MockBenchmark {
 
             mockeryDisabledTarget = Mockery.mock(Target.class, false);
             mockitoDisabledTarget = Mockito.mock(Target.class, Mockito.withSettings().stubOnly());
+
+            mockerySpy = Mockery.spy(new Impl());
+            mockitoSpy = Mockito.spy(new Impl());
         }
 
         @TearDown(Level.Iteration)
@@ -81,6 +86,38 @@ public class MockBenchmark {
             Mockery.reset(mockeryDisabledTarget);
             Mockito.reset(mockitoDisabledTarget);
         }
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    public void benchmarkSpyCreationMockery(final Blackhole blackhole) {
+        blackhole.consume(Mockery.spy(new Impl()));
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    public void benchmarkSpyCreationMockito(final Blackhole blackhole) {
+        blackhole.consume(Mockito.spy(new Impl()));
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    public void benchmarkSpyMockery(final Mocks mocks, final Blackhole blackhole) {
+        Mockery.reset(mocks.mockerySpy);
+        Mockery.when(mocks.mockerySpy.doSomething()).thenReturn("foo");
+        blackhole.consume(mocks.mockerySpy.doSomething());
+        blackhole.consume(mocks.mockerySpy.doSomethingElse());
+        blackhole.consume(mocks.mockerySpy.doSomething("foo"));
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    public void benchmarkSpyMockito(final Mocks mocks, final Blackhole blackhole) {
+        Mockito.reset(mocks.mockitoSpy);
+        Mockito.when(mocks.mockitoSpy.doSomething()).thenReturn("foo");
+        blackhole.consume(mocks.mockitoSpy.doSomething());
+        blackhole.consume(mocks.mockitoSpy.doSomethingElse());
+        blackhole.consume(mocks.mockitoSpy.doSomething("foo"));
     }
 
     @Benchmark
@@ -259,5 +296,22 @@ public class MockBenchmark {
         String doSomething();
         String doSomething(final String arg1);
         int doSomethingElse();
+    }
+
+    public static class Impl implements Target {
+        @Override
+        public String doSomething() {
+            return "foo";
+        }
+
+        @Override
+        public String doSomething(final String arg1) {
+            return "bar";
+        }
+
+        @Override
+        public int doSomethingElse() {
+            return 0;
+        }
     }
 }
