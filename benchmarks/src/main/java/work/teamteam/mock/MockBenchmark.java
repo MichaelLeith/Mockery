@@ -28,28 +28,30 @@ import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
 
-/**
- * Benchmark                                                Mode  Cnt         Score        Error  Units
- MockBenchmark.benchmarkCallMockedMethodMockery             thrpt   10   5360611.949 ±  38098.403  ops/s
- MockBenchmark.benchmarkCallMockedMethodMockito             thrpt   10     82863.989 ±   1446.033  ops/s
- MockBenchmark.benchmarkCallMultipleMockedMethodMockery     thrpt   10   2946824.360 ±  37531.862  ops/s
- MockBenchmark.benchmarkCallMultipleMockedMethodMockito     thrpt   10     41536.095 ±    637.083  ops/s
- MockBenchmark.benchmarkCallWhenMockery                     thrpt   10   2145653.095 ±   8438.961  ops/s
- MockBenchmark.benchmarkCallWhenMockito                     thrpt   10      3302.012 ±    145.471  ops/s
- MockBenchmark.benchmarkCallWhenPrimitiveMockery            thrpt   10   2876726.136 ±  28699.631  ops/s
- MockBenchmark.benchmarkCallWhenPrimitiveMockito            thrpt   10      2609.161 ±     83.768  ops/s
- MockBenchmark.benchmarkCreatingMockMockery                 thrpt   10  32250495.245 ± 232366.998  ops/s
- MockBenchmark.benchmarkCreatingMockMockito                 thrpt   10   2085453.988 ±   9575.305  ops/s
- MockBenchmark.benchmarkResetCallSingleArgWhenChainMockery  thrpt   10    740310.532 ±   3359.606  ops/s
- MockBenchmark.benchmarkResetCallSingleArgWhenChainMockito  thrpt   10     16143.108 ±     32.022  ops/s
- MockBenchmark.benchmarkResetCallWhenChainMockery           thrpt   10   1061992.726 ±  34926.096  ops/s
- MockBenchmark.benchmarkResetCallWhenChainMockito           thrpt   10     16621.828 ±    136.469  ops/s
- MockBenchmark.benchmarkResetCallWhenMockery                thrpt   10   1984342.214 ±  18845.121  ops/s
- MockBenchmark.benchmarkResetCallWhenMockito                thrpt   10     28384.565 ±    368.745  ops/s
- MockBenchmark.benchmarkResetThenVerifyMockery              thrpt   10   1789209.255 ±  15050.346  ops/s
- MockBenchmark.benchmarkResetThenVerifyMockito              thrpt   10     28643.001 ±    129.497  ops/s
- MockBenchmark.benchmarkVerifyMockery                       thrpt   10   1761442.480 ±  17790.333  ops/s
- MockBenchmark.benchmarkVerifyMockito                       thrpt   10      1580.378 ±     19.647  ops/s
+/*
+ Benchmark                                                      Mode  Cnt         Score        Error  Units
+ MockBenchmark.benchmarkCallMockedMethodMockery                thrpt   10   5276808.809 ±  18245.556  ops/s
+ MockBenchmark.benchmarkCallMockedMethodMockito                thrpt   10     82936.094 ±   2057.023  ops/s
+ MockBenchmark.benchmarkCallMockedMethodWithoutHistoryMockery  thrpt   10   5527766.895 ±  20608.835  ops/s
+ MockBenchmark.benchmarkCallMockedMethodWithoutHistoryMockito  thrpt   10     87380.608 ±    220.377  ops/s
+ MockBenchmark.benchmarkCallMultipleMockedMethodMockery        thrpt   10   2824244.780 ±  28088.784  ops/s
+ MockBenchmark.benchmarkCallMultipleMockedMethodMockito        thrpt   10     40799.564 ±    716.411  ops/s
+ MockBenchmark.benchmarkCallWhenMockery                        thrpt   10   2116378.389 ±   9271.883  ops/s
+ MockBenchmark.benchmarkCallWhenMockito                        thrpt   10      3383.156 ±    128.891  ops/s
+ MockBenchmark.benchmarkCallWhenPrimitiveMockery               thrpt   10   2890055.036 ±  13057.888  ops/s
+ MockBenchmark.benchmarkCallWhenPrimitiveMockito               thrpt   10      2581.798 ±     68.374  ops/s
+ MockBenchmark.benchmarkCreatingMockMockery                    thrpt   10  29780347.999 ± 377141.126  ops/s
+ MockBenchmark.benchmarkCreatingMockMockito                    thrpt   10   1987538.622 ±   4016.358  ops/s
+ MockBenchmark.benchmarkResetCallSingleArgWhenChainMockery     thrpt   10    720096.361 ±   9254.991  ops/s
+ MockBenchmark.benchmarkResetCallSingleArgWhenChainMockito     thrpt   10     15808.211 ±     53.136  ops/s
+ MockBenchmark.benchmarkResetCallWhenChainMockery              thrpt   10   1096411.960 ±   2046.979  ops/s
+ MockBenchmark.benchmarkResetCallWhenChainMockito              thrpt   10     16687.147 ±     77.776  ops/s
+ MockBenchmark.benchmarkResetCallWhenMockery                   thrpt   10   2040258.564 ±   4022.442  ops/s
+ MockBenchmark.benchmarkResetCallWhenMockito                   thrpt   10     28068.975 ±    138.278  ops/s
+ MockBenchmark.benchmarkResetThenVerifyMockery                 thrpt   10   1730232.237 ±   4652.011  ops/s
+ MockBenchmark.benchmarkResetThenVerifyMockito                 thrpt   10     28421.756 ±    164.791  ops/s
+ MockBenchmark.benchmarkVerifyMockery                          thrpt   10   1748486.989 ±   4217.442  ops/s
+ MockBenchmark.benchmarkVerifyMockito                          thrpt   10      1545.149 ±     14.545  ops/s
  */
 @Warmup(iterations = 5, time = 5)
 @Measurement(iterations = 10, time = 5)
@@ -59,11 +61,16 @@ public class MockBenchmark {
     public static class Mocks {
         Target mockeryTarget;
         Target mockitoTarget;
+        Target mockeryDisabledTarget;
+        Target mockitoDisabledTarget;
 
         @Setup(Level.Trial)
         public void setUp() {
             mockeryTarget = Mockery.mock(Target.class);
             mockitoTarget = Mockito.mock(Target.class);
+
+            mockeryDisabledTarget = Mockery.mock(Target.class, false);
+            mockitoDisabledTarget = Mockito.mock(Target.class, Mockito.withSettings().stubOnly());
         }
 
         @TearDown(Level.Iteration)
@@ -71,6 +78,8 @@ public class MockBenchmark {
             Mockery.reset();
             Mockery.reset(mockeryTarget);
             Mockito.reset(mockitoTarget);
+            Mockery.reset(mockeryDisabledTarget);
+            Mockito.reset(mockitoDisabledTarget);
         }
     }
 
@@ -194,6 +203,18 @@ public class MockBenchmark {
     public void benchmarkCallWhenPrimitiveMockito(final Mocks mocks, final Blackhole blackhole) {
         Mockito.when(mocks.mockitoTarget.doSomethingElse()).thenReturn(100);
         blackhole.consume(mocks.mockitoTarget.doSomething());
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    public void benchmarkCallMockedMethodWithoutHistoryMockery(final Mocks mocks, final Blackhole blackhole) {
+        blackhole.consume(mocks.mockeryDisabledTarget.doSomething());
+    }
+
+    @Benchmark
+    @BenchmarkMode(Mode.Throughput)
+    public void benchmarkCallMockedMethodWithoutHistoryMockito(final Mocks mocks, final Blackhole blackhole) {
+        blackhole.consume(mocks.mockitoDisabledTarget.doSomething());
     }
 
     @Benchmark

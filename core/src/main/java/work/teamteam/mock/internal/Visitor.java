@@ -41,16 +41,19 @@ public class Visitor<T> {
     // as these methods don't directly receive the mock object we need some global state to record who was last touched
     // e.g when(foo.something(bar).doReturn(...)); will be tracking foo because it was last called
     private static volatile Visitor<?> lastCall = null;
-    // @note: mutation is not thread safe, we assume all your setup is run before using the mock
-    private List<Callback> callbacks;
     private final T impl;
     private final Defaults defaults;
-    private TriPredicate<String, Object[], List<Object[]>> verifier;
     private final Map<String, List<Object[]>> trackers;
+    private final boolean trackHistory;
+    // @note: mutation is not thread safe, we assume all your setup is run before using the mock
+    private List<Callback> callbacks;
+    private TriPredicate<String, Object[], List<Object[]>> verifier;
     private Map<String, CallHistory> callHistories;
     private String lastKey;
+    private Object[] lastArgs;
 
-    public Visitor(final T impl, final Defaults defaults) {
+    public Visitor(final T impl, final Defaults defaults, final boolean trackHistory) {
+        this.trackHistory = trackHistory;
         this.callbacks = null;
         this.impl = impl;
         this.defaults = Objects.requireNonNull(defaults);
@@ -58,6 +61,7 @@ public class Visitor<T> {
         this.trackers = new HashMap<>();
         callHistories = null;
         lastKey = null;
+        lastArgs = null;
     }
 
     /**
@@ -85,7 +89,11 @@ public class Visitor<T> {
         lastCall = this;
         synchronized (this) {
             lastKey = key;
-            target.add(args);
+            lastArgs = args;
+            // only add if we're tracking
+            if (trackHistory) {
+                target.add(args);
+            }
         }
         if (callbacks != null) {
             for (Callback callback : callbacks) {
@@ -195,7 +203,8 @@ public class Visitor<T> {
     public static <T> Mock<T> rollbackLast() {
         synchronized (DEFAULT_VERIFIER) {
             final List<Object[]> last = lastCall.trackers.get(lastCall.lastKey);
-            return new Mock<>(lastCall, lastCall.lastKey, last.remove(last.size() - 1));
+            last.remove(last.size() - 1);
+            return new Mock<>(lastCall, lastCall.lastKey, lastCall.lastArgs);
         }
     }
 
@@ -205,8 +214,8 @@ public class Visitor<T> {
      */
     public void setVerification(final Verifier verifier) {
         this.verifier = (k, a, l) -> {
-            verifier.verify(this, k, Matchers.getMatchers(), l, a);
             this.verifier = DEFAULT_VERIFIER;
+            verifier.verify(this, k, Matchers.getMatchers(), l, a);
             return false;
         };
     }

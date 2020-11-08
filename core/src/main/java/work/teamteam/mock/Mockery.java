@@ -29,6 +29,7 @@ import work.teamteam.mock.internal.Verifier;
 import work.teamteam.mock.internal.Visitor;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -84,7 +85,19 @@ public class Mockery {
      * @return an instance implementing clazz
      */
     public static <T> T mock(final Class<T> clazz) {
-        return mock(clazz, Defaults.Impl.IMPL);
+        return mock(clazz, true);
+    }
+
+    /**
+     * Creates a new mock implementing the given class. Mocks provide a dummy implementation of the class,
+     * with every method returning a default value based on their return type. This default is specified by "defaults"
+     * @param clazz class to implement
+     * @param trackHistory whether to track history
+     * @param <T> type of the class
+     * @return an instance implementing clazz
+     */
+    public static <T> T mock(final Class<T> clazz, final boolean trackHistory) {
+        return mock(clazz, Defaults.Impl.IMPL, trackHistory);
     }
 
     /**
@@ -96,7 +109,19 @@ public class Mockery {
      * @return an instance implementing clazz
      */
     public static <T> T mock(final Class<T> clazz, final Defaults defaults) {
-        return build(clazz, null, defaults);
+        return mock(clazz, defaults, true);
+    }
+
+    /**
+     * Creates a new mock implementing the given class. Mocks provide a dummy implementation of the class,
+     * with every method returning a default value based on their return type. This default is specified by "defaults"
+     * @param clazz class to implement
+     * @param defaults lets you specify the default values (per class) returned when methods are called
+     * @param <T> type of the class
+     * @return an instance implementing clazz
+     */
+    public static <T> T mock(final Class<T> clazz, final Defaults defaults, final boolean trackHistory) {
+        return build(clazz, null, defaults, trackHistory);
     }
 
     /**
@@ -107,7 +132,11 @@ public class Mockery {
      * @return an instance spying on impl
      */
     public static <T> T spy(final T impl) {
-        return build(impl.getClass(), impl, Defaults.Impl.IMPL);
+        return build(impl.getClass(), impl, Defaults.Impl.IMPL, true);
+    }
+
+    public static <T> T spy(final T impl, final boolean trackHistory) {
+        return build(impl.getClass(), impl, Defaults.Impl.IMPL, trackHistory);
     }
 
     /**
@@ -118,8 +147,21 @@ public class Mockery {
      * @param <T> type of the class
      * @return an instance spying on clazz
      */
-    public static <T> T spy(final Class<T> clazz, final Object... args) throws Exception {
-        for (final Constructor<?> constructor: clazz.getConstructors()) {
+    public static <T> T spy(final Class<T> clazz, final Object... args) {
+        return spy(clazz, true, args);
+    }
+
+    /**
+     * Creates a new spy. This is equivalent to spy(new clazz(args...)). With spies you can override methods &
+     * record their call count. Any method you don't override will invoke the equivalent method in impl.
+     * @param clazz the class to spy on
+     * @param trackHistory whether to track history
+     * @param args args to pass to the instance of clazz we're instanciating
+     * @param <T> type of the class
+     * @return an instance spying on clazz
+     */
+    public static <T> T spy(final Class<T> clazz, final boolean trackHistory, final Object... args) {
+        for (final Constructor<?> constructor: clazz.getDeclaredConstructors()) {
             if (constructor.getParameterCount() == args.length) {
                 final Class<?>[] params = constructor.getParameterTypes();
                 for (int i = 0; i < args.length; i++) {
@@ -127,7 +169,14 @@ public class Mockery {
                         break;
                     }
                 }
-                return spy(clazz.cast(constructor.newInstance(args)));
+                try {
+                    constructor.setAccessible(true);
+                    return spy(clazz.cast(constructor.newInstance(args)), trackHistory);
+                } catch (IllegalAccessException | InstantiationException | InvocationTargetException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    constructor.setAccessible(false);
+                }
             }
         }
         throw new RuntimeException("no constructor found for args " + Arrays.asList(args));
@@ -375,7 +424,10 @@ public class Mockery {
      * @return a new instance of clazz we can mock
      */
     @SuppressWarnings("unchecked")
-    private static <T> T build(final Class<?> clazz, final T impl, final Defaults defaults) {
+    private static <T> T build(final Class<?> clazz,
+                               final T impl,
+                               final Defaults defaults,
+                               final boolean trackHistory) {
         try {
             Class<?> mock = TYPE_CACHE.get(clazz);
             if (mock == null) {
@@ -383,7 +435,7 @@ public class Mockery {
                 TYPE_CACHE.put(clazz, mock);
             }
             final T instance = OBJENESIS_STD.newInstance((Class<T>) mock);
-            ((Trackable) instance).setVisitor(new Visitor<>(impl, defaults));
+            ((Trackable) instance).setVisitor(new Visitor<>(impl, defaults, trackHistory));
             return instance;
         } catch (Exception e) {
             throw new RuntimeException(e);

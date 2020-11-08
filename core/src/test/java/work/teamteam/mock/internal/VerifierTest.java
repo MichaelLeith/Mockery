@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class VerifierTest {
     @Test
     void testMatch() throws Throwable {
-        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
         final List<Object[]> list = visitor.init("foo");
         visitor.run(list, "foo", Object.class);
         visitor.run(list, "foo", Object.class);
@@ -39,7 +39,7 @@ public class VerifierTest {
 
     @Test
     void testMatchIsRepeatable() throws Throwable {
-        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
         final List<Object[]> list = visitor.init("foo");
         visitor.run(list, "foo", Object.class);
         visitor.run(list, "foo", Object.class);
@@ -50,7 +50,7 @@ public class VerifierTest {
 
     @Test
     void testFail() throws Throwable {
-        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
         final List<Object[]> list = new ArrayList<>();
         visitor.run(list, "foo", Object.class);
         assertThrows(RuntimeException.class, () ->
@@ -59,7 +59,7 @@ public class VerifierTest {
 
     @Test
     void testFailDifferentFnName() throws Throwable {
-        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
         final List<Object[]> list = visitor.init("foo2");
         visitor.run(list, "foo2", Object.class);
         new Verifier(i -> i == 1).verify(visitor, "foo2", Collections.emptyList(), list);
@@ -69,7 +69,7 @@ public class VerifierTest {
 
     @Test
     void testFailDifferentArgs() throws Throwable {
-        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
         final List<Object[]> list = visitor.init("foo");
         visitor.run(list, "foo", Object.class, 1);
         new Verifier(i -> i == 1).verify(visitor, "foo", Collections.emptyList(), list, 1);
@@ -79,7 +79,7 @@ public class VerifierTest {
 
     @Test
     void testThrowsOnWrongNumArgs() throws Throwable {
-        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
         final List<Object[]> list = new ArrayList<>();
         visitor.run(list, "foo", Object.class, 1);
         assertThrows(RuntimeException.class, () -> new Verifier(i -> i == 1).verify(visitor, "foo", Collections.emptyList(), new ArrayList<>()));
@@ -88,7 +88,7 @@ public class VerifierTest {
 
     @Test
     void testMatchCondition() throws Throwable {
-        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
         final List<Object[]> list = new ArrayList<>();
         visitor.run(list, "foo", Object.class, 1);
         visitor.run(list, "foo", Object.class, 1);
@@ -97,7 +97,7 @@ public class VerifierTest {
 
     @Test
     void testDoesntMatchCondition() throws Throwable {
-        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
         final List<Object[]> list = new ArrayList<>();
         visitor.run(list, "foo", Object.class, 1);
         visitor.run(list, "foo", Object.class, 2);
@@ -107,7 +107,7 @@ public class VerifierTest {
 
     @Test
     void testThrowsOnWrongNumPredicateArgs() throws Throwable {
-        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL);
+        final Visitor<?> visitor = new Visitor<>(null, Defaults.Impl.IMPL, true);
         final List<Object[]> list = new ArrayList<>();
         visitor.run(list, "foo", Object.class, 1);
         // too many

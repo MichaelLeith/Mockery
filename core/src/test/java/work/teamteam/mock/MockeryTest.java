@@ -19,6 +19,8 @@ package work.teamteam.mock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -57,12 +59,20 @@ public class MockeryTest {
     public static class Foo {
         private final int i;
 
+        private Foo(int i, int j, int k) {
+            this.i = i + j + k;
+        }
+
         public Foo(int i, int j) {
             this.i = i + j;
         }
 
         public Foo(int i) {
             this.i = i;
+        }
+
+        public int getI() {
+            return i;
         }
 
         public void testWithVoid(Void foo) {
@@ -140,7 +150,7 @@ public class MockeryTest {
         Mockery.verify(impl, 2).intAcc(1);
         Mockery.verify(impl, 3).intAcc(Matchers.capture(capture));
         assertEquals(2, capture.tail());
-        //assertEquals(Arrays.asList(1, 1, 2), capture.captured());
+        assertEquals(Arrays.asList(1, 1, 2), capture.captured());
         Mockery.verify(impl, 0).intAcc(-1);
         Mockery.verify(impl, 1).intAcc(2);
 
@@ -153,9 +163,9 @@ public class MockeryTest {
                 Matchers.capture(capture1),
                 Matchers.capture(capture2));
         assertEquals(3, capture1.tail());
-        //assertEquals(Arrays.asList(1L, 3L), capture1.captured());
+        assertEquals(Arrays.asList(1L, 3L), capture1.captured());
         assertEquals(4, capture2.tail());
-        //assertEquals(Arrays.asList(2, 4), capture2.captured());
+        assertEquals(Arrays.asList(2, 4), capture2.captured());
     }
 
     @Test
@@ -189,7 +199,7 @@ public class MockeryTest {
     }
 
     @Test
-    void testSpyClass() throws Exception {
+    void testSpyClass() {
         final Foo foo = Mockery.spy(Foo.class, 1);
         assertEquals("woo", foo.test("woo"));
         Mockery.verify(foo, 1).test("woo");
@@ -199,13 +209,18 @@ public class MockeryTest {
     }
 
     @Test
+    void testSpyPrivateConstructor() {
+        assertEquals(6, Mockery.spy(Foo.class, 1, 2, 3).getI());
+    }
+
+    @Test
     void testSpyWithWrongArgType() {
         assertThrows(RuntimeException.class, () -> Mockery.spy(Foo.class, "lol", 1));
     }
 
     @Test
     void testSpyWithTooManyArgType() {
-        assertThrows(RuntimeException.class, () -> Mockery.spy(Foo.class, 1, 1, 1));
+        assertThrows(RuntimeException.class, () -> Mockery.spy(Foo.class, 1, 1, 1, 1, 2));
     }
 
     @Test
