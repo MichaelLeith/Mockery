@@ -18,8 +18,8 @@ plugins {
     id 'application'
 }
 
-sourceCompatibility = JavaVersion.VERSION_14
-targetCompatibility = JavaVersion.VERSION_14
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
 
 group 'work.teamteam'
 version '1.0'
