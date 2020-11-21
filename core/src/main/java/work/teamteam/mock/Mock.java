@@ -63,7 +63,9 @@ public class Mock<T> implements Visitor.Fn {
 
     @Override
     public Object apply(final Object[] args) throws Throwable {
-        return state.isEmpty() ? null : state.get((index < state.size() ? ++index : index) - 1).apply(args);
+        synchronized (state) {
+            return state.isEmpty() ? null : state.get((index < state.size() ? ++index : index) - 1).apply(args);
+        }
     }
 
     private Mock<T> add(final Visitor.Fn fn) {

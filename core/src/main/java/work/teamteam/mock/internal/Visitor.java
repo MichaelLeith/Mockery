@@ -89,14 +89,16 @@ public class Visitor<T> {
             lastKey = key;
             lastArgs = args;
             // only add if we're tracking
-            if (trackHistory) {
+            if (trackHistory || target.isEmpty()) {
                 target.add(args);
+            } else {
+                target.set(0, args);
             }
-        }
-        if (callbacks != null) {
-            for (Callback callback : callbacks) {
-                if (callback.matches(key, args)) {
-                    return callback.fn.apply(args);
+            if (callbacks != null) {
+                for (Callback callback : callbacks) {
+                    if (callback.matches(key, args)) {
+                        return callback.fn.apply(args);
+                    }
                 }
             }
         }
@@ -145,7 +147,7 @@ public class Visitor<T> {
      * @param args list of conditions for using this predicate
      */
     @SuppressWarnings("unchecked")
-    public void registerCallback(final Fn fn, final String key, final Predicate<Object>... args) {
+    public synchronized void registerCallback(final Fn fn, final String key, final Predicate<Object>... args) {
         if (callbacks == null) {
             callbacks = new ArrayList<>(4);
         } else {
@@ -206,13 +208,16 @@ public class Visitor<T> {
      * @param verifier verifier to uset
      */
     public void setVerification(final Verifier verifier) {
-        this.verifier = (k, a, l) -> {
-            this.verifier = DEFAULT_VERIFIER;
-            verifier.verify(this, k, Matchers.getMatchers(), l, a);
-            return false;
-        };
+        synchronized (this) {
+            this.verifier = (k, a, l) -> {
+                synchronized (this) {
+                    this.verifier = DEFAULT_VERIFIER;
+                    verifier.verify(this, k, Matchers.getMatchers(), l, a);
+                }
+                return false;
+            };
+        }
     }
-
 
     /**
      * Returns the number of times the key + args combination was called

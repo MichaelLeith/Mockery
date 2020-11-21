@@ -118,9 +118,14 @@ public class VisitorTest {
         final Visitor<?> visitor = new Visitor<>(new Proxy<>(impl), Defaults.Impl.IMPL, false);
         final List<Object[]> hist = visitor.init("withArgs()I");
         assertEquals(impl.withArgs(), visitor.run(hist, "withArgs()I", int.class));
+        assertEquals(impl.withArgs(), visitor.run(hist, "withArgs()I", int.class));
+        // visitor will always return 1
         visitor.setVerification(new Verifier(Times.eq(1)));
+        visitor.run(hist, "withArgs()I", int.class);
+        visitor.setVerification(new Verifier(Times.eq(2)));
         assertThrows(RuntimeException.class, () -> visitor.run(hist, "withArgs()I", int.class));
-        assertEquals(Collections.emptyList(), hist);
+        assertEquals(1, hist.size());
+        assertEquals(0, hist.get(0).length);
         assertEquals(impl.withArgs(), visitor.run(hist, "withArgs()I", int.class));
     }
 
@@ -150,7 +155,7 @@ public class VisitorTest {
         for (int i = 0; i < 10; i++) {
             visitor.run(hist, "withArgs()I", int.class);
         }
-        assertTrue(hist.isEmpty());
+        assertEquals(1, hist.size());
     }
 
     public static final class Impl {

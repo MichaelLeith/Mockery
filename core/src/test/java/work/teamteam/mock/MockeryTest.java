@@ -24,6 +24,7 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static work.teamteam.mock.Matchers.anyInt;
 import static work.teamteam.mock.Mockery.mock;
 import static work.teamteam.mock.Mockery.when;
 
@@ -138,6 +139,22 @@ public class MockeryTest {
         Mockery.verify(impl, Times.le(1)).intAcc(2);
         Mockery.verify(impl, Times.lt(2)).intAcc(2);
         Mockery.verify(impl, Times.gt(0)).intAcc(2);
+    }
+
+    @Test
+    void testVerifyWithoutHistory() {
+        final Foo impl = mock(Foo.class, false);
+        when(impl.intAcc(anyInt())).thenReturn("woo");
+        assertEquals("woo", impl.intAcc(1));
+        assertEquals("woo", impl.intAcc(1));
+        assertEquals("woo", impl.intAcc(2));
+        // only the last call is recorded
+        Mockery.verify(impl, 0).intAcc(1);
+        Mockery.verify(impl, 0).intAcc(-1);
+        Mockery.verify(impl, 1).intAcc(2);
+        Mockery.verify(impl, Times.eq(1)).intAcc(2);
+        Mockery.verify(impl, Times.ge(1)).intAcc(2);
+        Mockery.verify(impl, Times.le(1)).intAcc(2);
     }
 
     @Test
@@ -258,7 +275,7 @@ public class MockeryTest {
         assertEquals("welp", impl.test("lol"));
         assertEquals("welp", impl.test(null));
 
-        when(impl.intAcc(Matchers.anyInt())).thenReturn("welp");
+        when(impl.intAcc(anyInt())).thenReturn("welp");
         assertEquals("welp", impl.intAcc(-1));
         assertEquals("welp", impl.intAcc(0));
         assertEquals("welp", impl.intAcc(1));
@@ -290,7 +307,7 @@ public class MockeryTest {
     @Test
     void testCanUseWhenOnMultipleFunctions() {
         final Foo impl = mock(Foo.class);
-        when(impl.intAcc(Matchers.anyInt())).thenReturn("welp");
+        when(impl.intAcc(anyInt())).thenReturn("welp");
         when(impl.test("bar")).thenReturn("2");
         assertEquals("welp", impl.intAcc(-1));
         assertEquals("2", impl.test("bar"));
@@ -300,7 +317,7 @@ public class MockeryTest {
     void testMocksCanBeUsedInWhenThenReturn() {
         final Foo impl = mock(Foo.class);
         when(impl.test(Matchers.any())).thenReturn("foo");
-        when(impl.intAcc(Matchers.anyInt())).thenReturn(impl.test("well"));
+        when(impl.intAcc(anyInt())).thenReturn(impl.test("well"));
         assertEquals("foo", impl.intAcc(-1));
     }
 

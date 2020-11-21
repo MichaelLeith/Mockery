@@ -161,7 +161,7 @@ public class Mockery {
      * @param <T> type of the class
      * @return an instance spying on clazz
      */
-    public static <T> T spy(final Class<T> clazz, final boolean trackHistory, final Object... args) {
+    public static synchronized <T> T spy(final Class<T> clazz, final boolean trackHistory, final Object... args) {
         final Constructor<?>[] constructors = clazz.getDeclaredConstructors();
         for (int i = 0; i < constructors.length; i++) {
             if (constructors[i].getParameterCount() == args.length) {
@@ -433,10 +433,15 @@ public class Mockery {
                                final Defaults defaults,
                                final boolean trackHistory) {
         try {
-            Class<?> mock = TYPE_CACHE.get(clazz);
-            if (mock == null) {
-                mock = inject(clazz);
-                TYPE_CACHE.put(clazz, mock);
+            Class<?> mock;
+            // using synchronized because we assume that this has typically single threaded
+            // access, so a ConcurrentHashMap is overkill
+            synchronized (TYPE_CACHE) {
+                mock = TYPE_CACHE.get(clazz);
+                if (mock == null) {
+                    mock = inject(clazz);
+                    TYPE_CACHE.put(clazz, mock);
+                }
             }
             final T instance = OBJENESIS_STD.newInstance((Class<T>) mock);
             ((Trackable) instance).setVisitor(new Visitor<>(impl, defaults, trackHistory));
