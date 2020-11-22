@@ -16,7 +16,70 @@
 
 plugins {
     id "io.freefair.aggregate-javadoc" version "5.3.0"
+    id 'maven-publish'
 }
 
-group 'work.teamteam'
-version '1.0.0'
+project(':mockery') { version = '1.0.0' }
+project(':mockery-annotations') { version = '1.0.0' }
+
+configure(subprojects.findAll()) {
+    configurations {
+        deployerJars
+    }
+
+    apply plugin: 'java-library'
+    apply plugin: 'maven-publish'
+
+    if (!it.name.contains('benchmarks')) {
+        publishing {
+            repositories {
+                maven {
+                    name = "GitHubPackages"
+                    url = "https://maven.pkg.github.com/MichaelLeith/Mockery"
+                    credentials {
+                        username = System.getenv("GITHUB_ACTOR")
+                        password = System.getenv("GITHUB_TOKEN")
+                    }
+                }
+            }
+            publications {
+                "$project.name"(MavenPublication) {
+                    from components.java
+                    groupId 'work.teamteam.mockery'
+                    artifactId project.name
+                    version project.version
+
+                    pom {
+                        name = project.name
+                        version project.version
+                        description = 'A Minimal mocking framework for Java 8+'
+                        url = 'https://github.com/MichaelLeith/Mockery'
+
+                        licenses {
+                            license {
+                                name = 'The Apache License, Version 2.0'
+                                url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                            }
+                        }
+                        developers {
+                            developer {
+                                id = 'MichaelLeith'
+                                name = 'Michael Leith'
+                                url = 'https://github.com/MichaelLeith'
+                            }
+                        }
+                        scm {
+                            url = 'https://github.com/MichaelLeith/Mockery.git'
+                        }
+                        issueManagement {
+                            url = 'https://github.com/MichaelLeith/Mockery/issues'
+                            system = 'GitHub issues'
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+

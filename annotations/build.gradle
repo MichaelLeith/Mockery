@@ -22,9 +22,6 @@ plugins {
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
 
-group 'work.teamteam'
-version '1.0.0'
-
 repositories {
     mavenCentral()
 }
@@ -78,9 +75,4 @@ jacocoTestReport {
 
 tasks.withType(JavaCompile) {
     options.compilerArgs << '-parameters'
-}
-
-java {
-    withJavadocJar()
-    withSourcesJar()
 }

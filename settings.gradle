@@ -1,4 +1,5 @@
 rootProject.name = 'Mockery'
+
 include 'core'
 include 'annotations'
 include 'benchmarks'

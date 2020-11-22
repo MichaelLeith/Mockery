@@ -19,8 +19,8 @@ plugins {
     id 'jacoco'
 }
 
-group 'work.teamteam'
-version '1.0.0'
+group = 'work.teamteam'
+version = '1.0.0'
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
@@ -82,9 +82,4 @@ jacocoTestReport {
 tasks.withType(JavaCompile) {
     options.compilerArgs << '-Xlint:unchecked'
     options.deprecation = true
-}
-
-java {
-    withJavadocJar()
-    withSourcesJar()
 }
