@@ -1,1 +1,1 @@
-packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"l":"work.teamteam.mockery"},{"l":"work.teamteam.mockery.annotations"},{"l":"work.teamteam.mockery.internal"}]
+packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"l":"com.mikeleith.mockery"},{"l":"com.mikeleith.mockery.annotations"},{"l":"com.mikeleith.mockery.internal"}]
