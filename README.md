@@ -43,11 +43,41 @@ when(t.foo()).thenReturn(x)
 
 // throw an exception if t.foo() was not called exactly once
 verify(t, 1).foo();
+verify(t, eq(1)).foo(); // x == 1
+verify(t, gt(1)).foo(); // x > 1
+verify(t, ge(1)).foo(); // x >= 1
+verify(t, lt(1)).foo(); // x < 1
+verify(t, le(1)).foo(); // x <= 1
+verify(t, i -> i > 4 && i < 2).foo();
 
 // Argument Matchers
 when(t.bar(anyInt()).thenReturn(x);
 when(t.bar(any(SomeClass.class)).thenReturn(x);
 when(t.bar(matches(a -> somePredicate(a)), eq("foo"), anyShort()).thenReturn(x);
+```
+
+### Annotations
+
+```java
+class MyTest {
+    // Inject a mock
+    @Mock Impl foo;
+    // Inject a spy around new Impl2();
+    @Spy Impl2 foo2;
+    // Inject a spy(foo3)
+    @Spy Impl2 foo3 = new Impl2(...);
+    // Inject other fields in MyTest into the best fitting Impl3 constructor (see MockeryInject.java)
+    // Currently we don't guarantee that @InjectMocks fields will be initialized (i.e we don't resolve the dag of constructors), 
+    // so use nested injection at your own peril
+    @InjectMocks Impl3 foo4;
+    // Injects an argument captor
+    @Captor Capture<String> stringCapture;
+    
+    @Before
+    public void setUp() {
+        MockeryInject.inject(this);
+    }
+}
 ```
 
 ## Defaults
