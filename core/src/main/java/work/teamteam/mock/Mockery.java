@@ -36,7 +36,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.IntPredicate;
 
 /**
@@ -47,8 +49,9 @@ import java.util.function.IntPredicate;
  * * to record the number of times certain methods were called with given arguments
  */
 public class Mockery {
-    // @todo: thread safety
-    private static final Map<Class<?>, Class<?>> TYPE_CACHE = new HashMap<>();
+    private static final Map<Class<?>, Description<?>> TYPE_CACHE = new HashMap<>();
+    // counter so that we can clear the cache if needed
+    private static int counter = 0;
     private static final ObjenesisStd OBJENESIS_STD = new ObjenesisStd();
     private static final String IMPL_NAME = Type.getInternalName(Visitor.class);
     private static final String IMPL_DESC = Type.getDescriptor(Visitor.class);
@@ -64,6 +67,10 @@ public class Mockery {
             Type.getType(Long.class),
             Type.getType(Double.class)
     };
+
+    public static void clearCache() {
+        TYPE_CACHE.clear();
+    }
 
     private Mockery() {}
 
@@ -133,11 +140,11 @@ public class Mockery {
      * @return an instance spying on impl
      */
     public static <T> T spy(final T impl) {
-        return build(impl.getClass(), new Proxy<>(impl), Defaults.Impl.IMPL, true);
+        return build(impl.getClass(), impl, Defaults.Impl.IMPL, true);
     }
 
     public static <T> T spy(final T impl, final boolean trackHistory) {
-        return build(impl.getClass(), new Proxy<>(impl), Defaults.Impl.IMPL, trackHistory);
+        return build(impl.getClass(), impl, Defaults.Impl.IMPL, trackHistory);
     }
 
     /**
@@ -244,12 +251,13 @@ public class Mockery {
      * @return A class extending T and implementing Trackable
      * @throws Exception an exception if we fail to extend the class, e.g if it is final
      */
-    private static <T> Class<?> inject(final Class<T> clazz) throws Exception {
+    @SuppressWarnings("unchecked")
+    private static <T> Description<?> inject(final Class<T> clazz) throws Exception {
         final RootClassVisitor visitor = new RootClassVisitor();
         new ClassReader(clazz.getName()).accept(visitor, ClassReader.EXPAND_FRAMES);
 
         final ClassWriter wr = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-        final String name = visitor.getName() + "Mock";
+        final String name = visitor.getName() + "Mock" + counter++;
         final String parent = writeClass(wr, clazz, name, visitor);
 
         // implement trackable (i.e create a new field for the visitor and method getVisitor)
@@ -267,7 +275,7 @@ public class Mockery {
             writeMethod(wr, name, method);
         }
         wr.visitEnd();
-        return loadClass(clazz, name.replace('/', '.'), wr.toByteArray());
+        return new Description<>((Class<?>) loadClass(clazz, name.replace('/', '.'), wr.toByteArray()));
     }
 
     /**
@@ -293,7 +301,7 @@ public class Mockery {
             signature = visitor.getSignature();
             interfaces = new String[]{Type.getInternalName(Trackable.class)};
         }
-        wr.visit(visitor.getVersion(), Opcodes.ACC_PUBLIC, name, signature, parent, interfaces);
+        wr.visit(visitor.getVersion(), Opcodes.ACC_PUBLIC & Opcodes.ACC_SYNTHETIC, name, signature, parent, interfaces);
         return parent;
     }
 
@@ -341,7 +349,7 @@ public class Mockery {
      * @param summary method summary
      */
     private static void writeConstructor(final ClassWriter wr, final String parent, final MethodSummary summary) {
-        final MethodVisitor vis = wr.visitMethod(Opcodes.ACC_PUBLIC,
+        final MethodVisitor vis = wr.visitMethod(Opcodes.ACC_PUBLIC & Opcodes.ACC_SYNTHETIC,
                 summary.getName(), summary.getDescriptor(), summary.getSignature(), summary.getExceptions());
         vis.visitCode();
         vis.visitVarInsn(Opcodes.ALOAD, 0); // this
@@ -365,7 +373,7 @@ public class Mockery {
         final String descriptor = summary.getDescriptor();
         final String key = summary.getName() + descriptor;
         final String var = key.replaceAll("[()/\\[]", "_").replace(';', '-');
-        wr.visitField(Opcodes.ACC_PRIVATE, var, Type.getDescriptor(List.class), null, null).visitEnd();
+        wr.visitField(Opcodes.ACC_PRIVATE & Opcodes.ACC_SYNTHETIC, var, Type.getDescriptor(List.class), null, null).visitEnd();
 
         // create a shim that loads all arguments into an Object[] and passes them to
         // T Visitor::run(String name+descriptor, Class<T> returnType, Object[] args);
@@ -429,11 +437,11 @@ public class Mockery {
      */
     @SuppressWarnings("unchecked")
     private static <T> T build(final Class<?> clazz,
-                               final Proxy<T> impl,
+                               final T impl,
                                final Defaults defaults,
                                final boolean trackHistory) {
         try {
-            Class<?> mock;
+            Description<?> mock;
             // using synchronized because we assume that this has typically single threaded
             // access, so a ConcurrentHashMap is overkill
             synchronized (TYPE_CACHE) {
@@ -443,8 +451,9 @@ public class Mockery {
                     TYPE_CACHE.put(clazz, mock);
                 }
             }
-            final T instance = OBJENESIS_STD.newInstance((Class<T>) mock);
-            ((Trackable) instance).setVisitor(new Visitor<>(impl, defaults, trackHistory));
+            final T instance = OBJENESIS_STD.newInstance((Class<T>) mock.clazz);
+            final Proxy<T> proxy = impl == null ? null : (Proxy<T>) mock.proxy(impl);
+            ((Trackable) instance).setVisitor(new Visitor<>(proxy, defaults, trackHistory));
             return instance;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -579,6 +588,28 @@ public class Mockery {
             return (Class<?>) method.invoke(parent.getClassLoader(), name, b, 0, b.length);
         } finally {
             method.setAccessible(false);
+        }
+    }
+
+    private static final class Description<T> {
+        final Class<T> clazz;
+        Map<Class, Function> entries = null;
+
+        public Description(final Class<T> clazz) {
+            this.clazz = Objects.requireNonNull(clazz);
+        }
+
+        @SuppressWarnings("unchecked")
+        public Proxy<T> proxy(final Object impl) {
+            if (entries == null) {
+                entries = new HashMap<>();
+            }
+            Function fn = entries.get(impl.getClass());
+            if (fn == null) {
+                fn = Proxy.build(impl.getClass());
+                entries.put(impl.getClass(), fn);
+            }
+            return (Proxy<T>) fn.apply(impl);
         }
     }
 }

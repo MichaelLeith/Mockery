@@ -21,7 +21,6 @@ import work.teamteam.mock.Defaults;
 import work.teamteam.mock.Times;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -31,13 +30,12 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class VisitorTest {
     @Test
     void testUsesImpl() throws Throwable {
         final Impl impl = new Impl();
-        final Visitor<?> visitor = new Visitor<>(new Proxy<>(impl), Defaults.Impl.IMPL, true);
+        final Visitor<?> visitor = new Visitor<>(Proxy.of(impl), Defaults.Impl.IMPL, true);
         assertEquals(impl.string(), visitor.run(new ArrayList<>(), "string()Ljava/lang/String;", String.class));
         assertArrayEquals(impl.arr(), (double[]) visitor.run(new ArrayList<>(), "arr()[D", double[].class));
         visitor.run(new ArrayList<>(), "v()V", void.class);
@@ -74,7 +72,7 @@ public class VisitorTest {
     @Test
     void testUsesImplWithArgs() throws Throwable {
         final Impl impl = new Impl();
-        final Visitor<?> visitor = new Visitor<>(new Proxy<>(impl), Defaults.Impl.IMPL, true);
+        final Visitor<?> visitor = new Visitor<>(Proxy.of(impl), Defaults.Impl.IMPL, true);
         assertEquals(impl.withArgs(), visitor.run(new ArrayList<>(), "withArgs()I", int.class));
         assertEquals(impl.withArgs(2), visitor.run(new ArrayList<>(), "withArgs(I)I", int.class, 2));
         assertEquals(impl.withArgs(2L), visitor.run(new ArrayList<>(), "withArgs(J)I", int.class, 2));
@@ -84,7 +82,7 @@ public class VisitorTest {
     @Test
     void testUsesCallback() throws Throwable {
         final Impl impl = new Impl();
-        final Visitor<?> visitor = new Visitor<>(new Proxy<>(impl), Defaults.Impl.IMPL, true);
+        final Visitor<?> visitor = new Visitor<>(Proxy.of(impl), Defaults.Impl.IMPL, true);
         visitor.registerCallback(a -> 10, "withArgs(I)I", i -> (int) i == 1);
         assertEquals(impl.withArgs(), visitor.run(new ArrayList<>(), "withArgs()I", int.class));
         assertEquals(10, visitor.run(new ArrayList<>(), "withArgs(I)I", int.class, 1));
@@ -96,7 +94,7 @@ public class VisitorTest {
     @Test
     void testThrowOnBadCallback() {
         final Impl impl = new Impl();
-        final Visitor<?> visitor = new Visitor<>(new Proxy<>(impl), Defaults.Impl.IMPL, true);
+        final Visitor<?> visitor = new Visitor<>(Proxy.of(impl), Defaults.Impl.IMPL, true);
         visitor.registerCallback(a -> "sad", "withArgs(I)I", i -> (int) i == 1);
         assertDoesNotThrow(() -> visitor.run(new ArrayList<>(), "withArgs(I)I", int.class, 1));
     }
@@ -104,7 +102,7 @@ public class VisitorTest {
     @Test
     void testRunWithVerifier() throws Throwable {
         final Impl impl = new Impl();
-        final Visitor<?> visitor = new Visitor<>(new Proxy<>(impl), Defaults.Impl.IMPL, true);
+        final Visitor<?> visitor = new Visitor<>(Proxy.of(impl), Defaults.Impl.IMPL, true);
         final List<Object[]> hist = visitor.init("withArgs()I");
         assertEquals(impl.withArgs(), visitor.run(hist, "withArgs()I", int.class));
         visitor.setVerification(new Verifier(Times.eq(1)));
@@ -115,7 +113,7 @@ public class VisitorTest {
     @Test
     void testRunWithVerifierWithoutHistory() throws Throwable {
         final Impl impl = new Impl();
-        final Visitor<?> visitor = new Visitor<>(new Proxy<>(impl), Defaults.Impl.IMPL, false);
+        final Visitor<?> visitor = new Visitor<>(Proxy.of(impl), Defaults.Impl.IMPL, false);
         final List<Object[]> hist = visitor.init("withArgs()I");
         assertEquals(impl.withArgs(), visitor.run(hist, "withArgs()I", int.class));
         assertEquals(impl.withArgs(), visitor.run(hist, "withArgs()I", int.class));
@@ -133,7 +131,7 @@ public class VisitorTest {
     @Test
     void testRunWithVerifierAndCallback() throws Throwable {
         final Impl impl = new Impl();
-        final Visitor<?> visitor = new Visitor<>(new Proxy<>(impl), Defaults.Impl.IMPL, true);
+        final Visitor<?> visitor = new Visitor<>(Proxy.of(impl), Defaults.Impl.IMPL, true);
         visitor.registerCallback(a -> 2, "withArgs()I");
         final List<Object[]> calls = visitor.init("withArgs()I");
         assertEquals(2,visitor.run(calls, "withArgs()I", int.class));
@@ -150,7 +148,7 @@ public class VisitorTest {
     @Test
     void testWithoutHistory() throws Throwable {
         final Impl impl = new Impl();
-        final Visitor<?> visitor = new Visitor<>(new Proxy<>(impl), Defaults.Impl.IMPL, false);
+        final Visitor<?> visitor = new Visitor<>(Proxy.of(impl), Defaults.Impl.IMPL, false);
         final List<Object[]> hist = visitor.init("withArgs()I");
         for (int i = 0; i < 10; i++) {
             visitor.run(hist, "withArgs()I", int.class);

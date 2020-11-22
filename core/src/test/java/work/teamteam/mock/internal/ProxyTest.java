@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class ProxyTest {
     @Test
     void testMatch() throws InvocationTargetException, IllegalAccessException {
-        final Proxy<Clazz> proxy = new Proxy<>(new Clazz());
+        final Proxy<Clazz> proxy = Proxy.of(new Clazz());
         assertEquals("hi", proxy.match("doStuff(I)Ljava/lang/String;", 1));
         assertEquals("hi bob", proxy.match("doStuff(ILjava/lang/String;)Ljava/lang/String;", 1, "bob"));
         assertEquals(1, proxy.match("doOtherStuff(I)I", 1));

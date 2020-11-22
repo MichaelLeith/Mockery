@@ -1,6 +1,6 @@
 # Mockery
 
-This is a quick library to learn how Mocking frameworks (like Mockito) in Java (currently 14, but likely works for java8+) work with minor changes.
+A Minimal mocking framework for Java 8+.
 
 ## Dependencies
 
@@ -78,36 +78,41 @@ Object/array - null
 
 Benchmarks are all run on An Intel i74870HQ (a mid 2014 Macbook With OSX 10.14.5), with Mockito equivalents for comparison. Take them with a pinch of salt, they're rough & don't cover all cases.
 
-| Benchmark                                       | Mode    | Cnt  | Score            | Error             | Units |
-| :---------------------------------------------- | ------- | ---: | ---------------: | ----------------: | ----- |
-| benchmarkCallMockedMethodMockery                | thrpt   | 10   |  ``5276808.809`` | ±  ``18245.556``  | ops/s |
-| benchmarkCallMockedMethodMockito                | thrpt   | 10   |    ``82936.094`` | ±   ``2057.023``  | ops/s |
-| benchmarkCallMockedMethodMockery                | thrpt   | 10   |  ``5276808.809`` | ±  ``18245.556``  | ops/s |
-| benchmarkCallMockedMethodMockito                | thrpt   | 10   |    ``82936.094`` | ±   ``2057.023``  | ops/s |
-| benchmarkCallMockedMethodWithoutHistoryMockery  | thrpt   | 10   |  ``5527766.895`` | ±  ``20608.835``  | ops/s |
-| benchmarkCallMockedMethodWithoutHistoryMockito  | thrpt   | 10   |    ``87380.608`` | ±    ``220.377``  | ops/s |
-| benchmarkCallMultipleMockedMethodMockery        | thrpt   | 10   |  ``2824244.780`` | ±  ``28088.784``  | ops/s |
-| benchmarkCallMultipleMockedMethodMockito        | thrpt   | 10   |    ``40799.564`` | ±    ``716.411``  | ops/s |
-| benchmarkCallWhenMockery                        | thrpt   | 10   |  ``2116378.389`` | ±   ``9271.883``  | ops/s |
-| benchmarkCallWhenMockito                        | thrpt   | 10   |     ``3383.156`` | ±    ``128.891``  | ops/s |
-| benchmarkCallWhenPrimitiveMockery               | thrpt   | 10   |  ``2890055.036`` | ±  ``13057.888``  | ops/s |
-| benchmarkCallWhenPrimitiveMockito               | thrpt   | 10   |     ``2581.798`` | ±     ``68.374``  | ops/s |
-| benchmarkCreatingMockMockery                    | thrpt   | 10   | ``29780347.999`` | ± ``377141.126``  | ops/s |
-| benchmarkCreatingMockMockito                    | thrpt   | 10   |  ``1987538.622`` | ±   ``4016.358``  | ops/s |
-| benchmarkResetCallSingleArgWhenChainMockery     | thrpt   | 10   |   ``720096.361`` | ±   ``9254.991``  | ops/s |
-| benchmarkResetCallSingleArgWhenChainMockito     | thrpt   | 10   |    ``15808.211`` | ±     ``53.136``  | ops/s |
-| benchmarkResetCallWhenChainMockery              | thrpt   | 10   |  ``1096411.960`` | ±   ``2046.979``  | ops/s |
-| benchmarkResetCallWhenChainMockito              | thrpt   | 10   |    ``16687.147`` | ±     ``77.776``  | ops/s |
-| benchmarkResetCallWhenMockery                   | thrpt   | 10   |  ``2040258.564`` | ±   ``4022.442``  | ops/s |
-| benchmarkResetCallWhenMockito                   | thrpt   | 10   |    ``28068.975`` | ±    ``138.278``  | ops/s |
-| benchmarkResetThenVerifyMockery                 | thrpt   | 10   |  ``1730232.237`` | ±   ``4652.011``  | ops/s |
-| benchmarkResetThenVerifyMockito                 | thrpt   | 10   |    ``28421.756`` | ±    ``164.791``  | ops/s |
-| benchmarkVerifyMockery                          | thrpt   | 10   |  ``1748486.989`` | ±   ``4217.442``  | ops/s |
-| benchmarkVerifyMockito                          | thrpt   | 10   |     ``1545.149`` | ±     ``14.545``  | ops/s |
+Currently all benchmarks show at least a 10x speedup over the equivalent Mockito, with some significantly more than that (up to 1000x).
+
+| Benchmark                                       | Mode  | Cnt  | Score            | Error             | Units |
+| :---------------------------------------------- | ----- | ---: | ---------------: | ----------------: | ----- |
+| benchmarkCallMockedMethodMockery                | thrpt |   20 |  ``5331026.301`` | ±  ``95661.425``  | ops/s |
+| benchmarkCallMockedMethodMockito                | thrpt |   20 |    ``85706.094`` | ±   ``2898.825``  | ops/s |
+| benchmarkCallMockedMethodWithoutHistoryMockery  | thrpt |   20 |  ``5264662.096`` | ± ``134407.460``  | ops/s |
+| benchmarkCallMockedMethodWithoutHistoryMockito  | thrpt |   20 |    ``90093.499`` | ±   ``2896.912``  | ops/s |
+| benchmarkCallMultipleMockedMethodMockery        | thrpt |   20 |  ``2926466.444`` | ±  ``54314.172``  | ops/s |
+| benchmarkCallMultipleMockedMethodMockito        | thrpt |   20 |    ``42731.195`` | ±   ``1367.676``  | ops/s |
+| benchmarkCallWhenMockery                        | thrpt |   20 |  ``2014668.259`` | ±  ``37970.570``  | ops/s |
+| benchmarkCallWhenMockito                        | thrpt |   20 |     ``2467.884`` | ±     ``29.706``  | ops/s |
+| benchmarkCallWhenPrimitiveMockery               | thrpt |   20 |  ``2645382.820`` | ±  ``34503.139``  | ops/s |
+| benchmarkCallWhenPrimitiveMockito               | thrpt |   20 |     ``1893.185`` | ±     ``22.615``  | ops/s |
+| benchmarkCreatingMockMockery                    | thrpt |   20 | ``30420720.292`` | ± ``583631.930``  | ops/s |
+| benchmarkCreatingMockMockito                    | thrpt |   20 |  ``1932487.150`` | ±  ``39684.368``  | ops/s |
+| benchmarkResetCallSingleArgWhenChainMockery     | thrpt |   20 |   ``718397.012`` | ±  ``10915.708``  | ops/s |
+| benchmarkResetCallSingleArgWhenChainMockito     | thrpt |   20 |    ``16573.017`` | ±    ``476.281``  | ops/s |
+| benchmarkResetCallWhenChainMockery              | thrpt |   20 |  ``1050775.816`` | ±  ``13502.864``  | ops/s |
+| benchmarkResetCallWhenChainMockito              | thrpt |   20 |    ``17258.047`` | ±    ``554.500``  | ops/s |
+| benchmarkResetCallWhenMockery                   | thrpt |   20 |  ``2028126.288`` | ±  ``38689.473``  | ops/s |
+| benchmarkResetCallWhenMockito                   | thrpt |   20 |    ``28509.275`` | ±   ``1007.732``  | ops/s |
+| benchmarkResetThenVerifyMockery                 | thrpt |   20 |  ``1738147.820`` | ±  ``14056.533``  | ops/s |
+| benchmarkResetThenVerifyMockito                 | thrpt |   20 |    ``29528.976`` | ±   ``1011.451``  | ops/s |
+| benchmarkSpyCreationMockery                     | thrpt |   20 | ``23252810.694`` | ±  ``91828.124``  | ops/s |
+| benchmarkSpyCreationMockito                     | thrpt |   20 |  ``1806122.406`` | ±  ``30543.991``  | ops/s |
+| benchmarkSpyMockery                             | thrpt |   20 |   ``898540.079`` | ±   ``9542.878``  | ops/s |
+| benchmarkSpyMockito                             | thrpt |   20 |    ``17783.933`` | ±    ``587.604``  | ops/s |
+| benchmarkVerifyMockery                          | thrpt |   20 |  ``1729869.162`` | ±  ``21367.168``  | ops/s |
+| benchmarkVerifyMockito                          | thrpt |   20 |     ``1124.063`` | ±      ``4.414``  | ops/s |
 
 ## TODO
 
 * Cleanup Spy/Matcher logic
 * Explore Instrumentation
-* Test + Optimize concurrency support
-* Unwrap recursion when reading asm?
+* Test + optimize concurrency support more
+* Performance tuning (especially initial mock generation)
+* Provide default mocked equals/hashCode methods (because Mockito does)

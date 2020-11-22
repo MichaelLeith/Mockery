@@ -30,32 +30,36 @@ import org.openjdk.jmh.infra.Blackhole;
 
 /*
  Benchmark                                                      Mode  Cnt         Score        Error  Units
- MockBenchmark.benchmarkCallMockedMethodMockery                thrpt   10   5276808.809 ±  18245.556  ops/s
- MockBenchmark.benchmarkCallMockedMethodMockito                thrpt   10     82936.094 ±   2057.023  ops/s
- MockBenchmark.benchmarkCallMockedMethodWithoutHistoryMockery  thrpt   10   5527766.895 ±  20608.835  ops/s
- MockBenchmark.benchmarkCallMockedMethodWithoutHistoryMockito  thrpt   10     87380.608 ±    220.377  ops/s
- MockBenchmark.benchmarkCallMultipleMockedMethodMockery        thrpt   10   2824244.780 ±  28088.784  ops/s
- MockBenchmark.benchmarkCallMultipleMockedMethodMockito        thrpt   10     40799.564 ±    716.411  ops/s
- MockBenchmark.benchmarkCallWhenMockery                        thrpt   10   2116378.389 ±   9271.883  ops/s
- MockBenchmark.benchmarkCallWhenMockito                        thrpt   10      3383.156 ±    128.891  ops/s
- MockBenchmark.benchmarkCallWhenPrimitiveMockery               thrpt   10   2890055.036 ±  13057.888  ops/s
- MockBenchmark.benchmarkCallWhenPrimitiveMockito               thrpt   10      2581.798 ±     68.374  ops/s
- MockBenchmark.benchmarkCreatingMockMockery                    thrpt   10  29780347.999 ± 377141.126  ops/s
- MockBenchmark.benchmarkCreatingMockMockito                    thrpt   10   1987538.622 ±   4016.358  ops/s
- MockBenchmark.benchmarkResetCallSingleArgWhenChainMockery     thrpt   10    720096.361 ±   9254.991  ops/s
- MockBenchmark.benchmarkResetCallSingleArgWhenChainMockito     thrpt   10     15808.211 ±     53.136  ops/s
- MockBenchmark.benchmarkResetCallWhenChainMockery              thrpt   10   1096411.960 ±   2046.979  ops/s
- MockBenchmark.benchmarkResetCallWhenChainMockito              thrpt   10     16687.147 ±     77.776  ops/s
- MockBenchmark.benchmarkResetCallWhenMockery                   thrpt   10   2040258.564 ±   4022.442  ops/s
- MockBenchmark.benchmarkResetCallWhenMockito                   thrpt   10     28068.975 ±    138.278  ops/s
- MockBenchmark.benchmarkResetThenVerifyMockery                 thrpt   10   1730232.237 ±   4652.011  ops/s
- MockBenchmark.benchmarkResetThenVerifyMockito                 thrpt   10     28421.756 ±    164.791  ops/s
- MockBenchmark.benchmarkVerifyMockery                          thrpt   10   1748486.989 ±   4217.442  ops/s
- MockBenchmark.benchmarkVerifyMockito                          thrpt   10      1545.149 ±     14.545  ops/s
+MockBenchmark.benchmarkCallMockedMethodMockery                thrpt   20   5331026.301 ±  95661.425  ops/s
+MockBenchmark.benchmarkCallMockedMethodMockito                thrpt   20     85706.094 ±   2898.825  ops/s
+MockBenchmark.benchmarkCallMockedMethodWithoutHistoryMockery  thrpt   20   5264662.096 ± 134407.460  ops/s
+MockBenchmark.benchmarkCallMockedMethodWithoutHistoryMockito  thrpt   20     90093.499 ±   2896.912  ops/s
+MockBenchmark.benchmarkCallMultipleMockedMethodMockery        thrpt   20   2926466.444 ±  54314.172  ops/s
+MockBenchmark.benchmarkCallMultipleMockedMethodMockito        thrpt   20     42731.195 ±   1367.676  ops/s
+MockBenchmark.benchmarkCallWhenMockery                        thrpt   20   2014668.259 ±  37970.570  ops/s
+MockBenchmark.benchmarkCallWhenMockito                        thrpt   20      2467.884 ±     29.706  ops/s
+MockBenchmark.benchmarkCallWhenPrimitiveMockery               thrpt   20   2645382.820 ±  34503.139  ops/s
+MockBenchmark.benchmarkCallWhenPrimitiveMockito               thrpt   20      1893.185 ±     22.615  ops/s
+MockBenchmark.benchmarkCreatingMockMockery                    thrpt   20  30420720.292 ± 583631.930  ops/s
+MockBenchmark.benchmarkCreatingMockMockito                    thrpt   20   1932487.150 ±  39684.368  ops/s
+MockBenchmark.benchmarkResetCallSingleArgWhenChainMockery     thrpt   20    718397.012 ±  10915.708  ops/s
+MockBenchmark.benchmarkResetCallSingleArgWhenChainMockito     thrpt   20     16573.017 ±    476.281  ops/s
+MockBenchmark.benchmarkResetCallWhenChainMockery              thrpt   20   1050775.816 ±  13502.864  ops/s
+MockBenchmark.benchmarkResetCallWhenChainMockito              thrpt   20     17258.047 ±    554.500  ops/s
+MockBenchmark.benchmarkResetCallWhenMockery                   thrpt   20   2028126.288 ±  38689.473  ops/s
+MockBenchmark.benchmarkResetCallWhenMockito                   thrpt   20     28509.275 ±   1007.732  ops/s
+MockBenchmark.benchmarkResetThenVerifyMockery                 thrpt   20   1738147.820 ±  14056.533  ops/s
+MockBenchmark.benchmarkResetThenVerifyMockito                 thrpt   20     29528.976 ±   1011.451  ops/s
+MockBenchmark.benchmarkSpyCreationMockery                     thrpt   20  23252810.694 ±  91828.124  ops/s
+MockBenchmark.benchmarkSpyCreationMockito                     thrpt   20   1806122.406 ±  30543.991  ops/s
+MockBenchmark.benchmarkSpyMockery                             thrpt   20    898540.079 ±   9542.878  ops/s
+MockBenchmark.benchmarkSpyMockito                             thrpt   20     17783.933 ±    587.604  ops/s
+MockBenchmark.benchmarkVerifyMockery                          thrpt   20   1729869.162 ±  21367.168  ops/s
+MockBenchmark.benchmarkVerifyMockito                          thrpt   20      1124.063 ±      4.414  ops/s
  */
-@Warmup(iterations = 1, time = 5)
-@Measurement(iterations = 1, time = 5)
-@Fork(1)
+@Warmup(iterations = 10, time = 10)
+@Measurement(iterations = 10, time = 10)
+@Fork(2)
 public class MockBenchmark {
     @State(Scope.Benchmark)
     public static class Mocks {

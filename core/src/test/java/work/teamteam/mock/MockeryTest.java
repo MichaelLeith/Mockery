@@ -574,4 +574,27 @@ public class MockeryTest {
         when(impl.get()).thenReturn("bar");
         assertEquals("bar", impl.get());
     }
+
+    public interface Target {
+        String doSomething();
+        String doSomething(final String arg1);
+        int doSomethingElse();
+    }
+
+    public static class Impl implements Target {
+        @Override
+        public String doSomething() {
+            return "foo";
+        }
+
+        @Override
+        public String doSomething(final String arg1) {
+            return "bar";
+        }
+
+        @Override
+        public int doSomethingElse() {
+            return 0;
+        }
+    }
 }

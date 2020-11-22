@@ -120,6 +120,7 @@ public class Visitor<T> {
     }
 
     public List<Object[]> init(final String key) {
+        // @todo: compare map vs sorted list
         final List<Object[]> history = new ArrayList<>();
         trackers.put(key, history);
         return history;
