@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-/**
- *
- * @since 1.0
- * @author Michael Leith
- * @version 1.0
- */
 package com.mikeleith.mockery;
+
+import org.openjdk.jmh.Main;
+
+import java.io.IOException;
+
+public class Benchmarks {
+    public static void main(String[] args) throws IOException {
+        Main.main(args);
+    }
+}

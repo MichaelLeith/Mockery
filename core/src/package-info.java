@@ -20,4 +20,4 @@
  * @author Michael Leith
  * @version 1.0
  */
-package work.teamteam.mockery;
+package com.mikeleith.mockery;

@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-/**
- *
- * @since 1.0
- * @author Michael Leith
- * @version 1.0
- */
 package com.mikeleith.mockery;
+
+public class DefaultsTest {
+}

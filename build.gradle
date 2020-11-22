@@ -45,7 +45,7 @@ configure(subprojects.findAll()) {
             publications {
                 "$project.name"(MavenPublication) {
                     from components.java
-                    groupId 'work.teamteam.mockery'
+                    groupId 'com.mikeleith.mockery'
                     artifactId project.name
                     version project.version
 

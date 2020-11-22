@@ -19,7 +19,7 @@ plugins {
     id 'jacoco'
 }
 
-group = 'work.teamteam'
+group = 'com.mikeleith'
 version = '1.0.0'
 
 sourceCompatibility = JavaVersion.VERSION_1_8

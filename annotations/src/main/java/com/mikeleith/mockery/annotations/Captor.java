@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-/**
- *
- * @since 1.0
- * @author Michael Leith
- * @version 1.0
- */
-package com.mikeleith.mockery;
+package com.mikeleith.mockery.annotations;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD})
+public @interface Captor {
+}
