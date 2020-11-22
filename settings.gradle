@@ -2,3 +2,6 @@ rootProject.name = 'Mockery'
 include 'core'
 include 'annotations'
 include 'benchmarks'
+
+project(':core').name='mockery'
+project(':annotations').name='mockery-annotations'

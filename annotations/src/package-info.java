@@ -20,4 +20,4 @@
  * @author Michael Leith
  * @version 1.0
  */
-package work.teamteam.mock;
+package work.teamteam.mockery;

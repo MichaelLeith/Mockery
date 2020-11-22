@@ -19,11 +19,11 @@ plugins {
     id 'jacoco'
 }
 
+group 'work.teamteam'
+version '1.0.0'
+
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
-
-group 'work.teamteam'
-version '1.0'
 
 repositories {
     mavenCentral()
@@ -61,6 +61,7 @@ jacocoTestCoverageVerification {
 test {
     finalizedBy jacocoTestReport
 }
+
 test.jvmArgs = ["--illegal-access=deny"]
 
 jacocoTestReport {
@@ -83,3 +84,7 @@ tasks.withType(JavaCompile) {
     options.deprecation = true
 }
 
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
