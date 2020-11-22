@@ -1,7 +1,7 @@
 # Mockery
 
-[![Version](https://img.shields.io/badge/version-1.0.0-orange.svg)](https://github.com/MichaelLeith/Mockery/blob/v1.0.0)
-[![Apache 2 License](https://img.shields.io/badge/license-Apache2-blue.svg)](https://github.com/MichaelLeith/Mockery/blob/v1.0.0/LICENSE)
+[![Version](https://img.shields.io/badge/version-1.0.0-orange.svg)](https://github.com/MichaelLeith/Mockery/tree/v1.0.0)
+[![Apache 2 License](https://img.shields.io/badge/license-Apache2-blue.svg)](https://github.com/MichaelLeith/Mockery/tree/v1.0.0/LICENSE)
 [![Javadoc](https://img.shields.io/badge/javadoc-1.0.0-green.svg)](https://mikeleith.com/Mockery/)
 
 A Minimal mocking framework for Java 8+.
