@@ -1,6 +1,6 @@
 # Mockery
 
-![Java CI with Gradle](https://github.com/MichaelLeith/Mockery/workflows/Java%20CI%20with%20Gradle/badge.svg)
+[![Maven](https://img.shields.io/maven-central/v/com.mikeleith.mockery/mockery.svg)](https://search.maven.org/search?q=com.mikeleith.mockery)
 [![Version](https://img.shields.io/badge/version-1.0.0-orange.svg)](https://github.com/MichaelLeith/Mockery/tree/v1.0.0)
 [![Apache 2 License](https://img.shields.io/badge/license-Apache2-blue.svg)](https://github.com/MichaelLeith/Mockery/tree/v1.0.0/LICENSE)
 [![Javadoc](https://img.shields.io/badge/javadoc-1.0.0-green.svg)](https://mikeleith.com/Mockery/)
