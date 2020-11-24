@@ -83,3 +83,8 @@ tasks.withType(JavaCompile) {
     options.compilerArgs << '-Xlint:unchecked'
     options.deprecation = true
 }
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
