@@ -20,8 +20,8 @@ plugins {
     id 'signing'
 }
 
-project(':mockery') { version = '1.0.0' }
-project(':mockery-annotations') { version = '1.0.0' }
+project(':mockery') { version = '1.0.1' }
+project(':mockery-annotations') { version = '1.0.1' }
 
 def getPassword(String keyChain) {
     def stdout = new ByteArrayOutputStream()

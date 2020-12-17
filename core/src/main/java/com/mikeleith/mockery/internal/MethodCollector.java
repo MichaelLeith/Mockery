@@ -72,7 +72,7 @@ class MethodCollector extends ClassVisitor {
                     new ClassReader(interfaces[i]).accept(vis, ClassReader.EXPAND_FRAMES);
                 }
             }
-            if (superName != null && !superName.startsWith("java/lang")) {
+            if (superName != null) {
                 new ClassReader(superName).accept(vis == null ? getChildVisitor() : vis, ClassReader.EXPAND_FRAMES);
             }
         } catch (IOException e) {

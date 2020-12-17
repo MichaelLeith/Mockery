@@ -23,6 +23,7 @@ import java.lang.reflect.InvocationTargetException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -39,8 +40,8 @@ public class InjectMocksTest {
     void testMock() {
         MockeryInject.inject(this);
         assertNotNull(target);
-        assertEquals(example, target.example);
-        assertEquals(example2, target.example2);
+        assertSame(example, target.example);
+        assertSame(example2, target.example2);
     }
 
     @Test

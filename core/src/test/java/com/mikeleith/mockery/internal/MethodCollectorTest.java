@@ -47,7 +47,7 @@ public class MethodCollectorTest {
                 false, Collections.emptySet(), methods);
         new ClassReader(Root.class.getName()).accept(collector, ClassReader.EXPAND_FRAMES);
         assertNotEquals(Collections.emptySet(), methods);
-        assertEquals(6, methods.size());
+        assertEquals(11, methods.size());
         final MethodSummary rootMethod = new MethodSummary("rootMethod",
                 "()Ljava/lang/String;",
                 null,
@@ -106,7 +106,7 @@ public class MethodCollectorTest {
         final MethodCollector collector = new MethodCollector(Opcodes.ACC_FINAL,
                 false, Collections.emptySet(), methods);
         new ClassReader(Interface3.class.getName()).accept(collector, ClassReader.EXPAND_FRAMES);
-        assertEquals(1, methods.size());
+        assertEquals(6, methods.size());
         final MethodSummary interface3Method = new MethodSummary("interface3Method",
                 "()I",
                 null,

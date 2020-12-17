@@ -22,11 +22,13 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static com.mikeleith.mockery.Matchers.anyInt;
 import static com.mikeleith.mockery.Mockery.mock;
 import static com.mikeleith.mockery.Mockery.when;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class MockeryTest {
     @BeforeEach
@@ -573,6 +575,16 @@ public class MockeryTest {
         assertNull(impl.get());
         when(impl.get()).thenReturn("bar");
         assertEquals("bar", impl.get());
+    }
+
+    @Test
+    void testMockEquals() {
+        final WithNative impl = mock(WithNative.class);
+        assertNotEquals(impl, impl);
+        assertNotEquals(impl, true);
+        when(impl.equals(Matchers.any())).thenReturn(true);
+        assertEquals(impl, impl);
+        assertEquals(impl, true);
     }
 
     public interface Target {
